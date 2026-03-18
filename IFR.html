@@ -134,113 +134,80 @@
         }
 
         .header {
-            background: #34495e;
-            color: #fff;
-            border-radius: 16px;
+            background: linear-gradient(135deg, #f8f9fb, #eef1f6);
+            border-radius: 12px;
             padding: 0;
             margin-bottom: 20px;
-            border: 1px solid rgba(0,0,0,0.1);
-            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.3), 0 2px 6px rgba(0,0,0,0.15);
+            border: 0.5px solid #c8d0dc;
+            box-shadow: 0 4px 16px rgba(10,22,40,0.08), 0 1px 4px rgba(10,22,40,0.05);
             overflow: hidden;
-            position: relative;
+            display: flex;
         }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -40%;
-            right: -10%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-            pointer-events: none;
+        .header-bar {
+            width: 5px;
+            background: linear-gradient(180deg, #1a2f5e, #2d4a7a);
+            flex-shrink: 0;
         }
 
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -5%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
-            pointer-events: none;
-        }
         .header-inner {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 22px 30px;
-            position: relative;
-            z-index: 1;
+            padding: 18px 26px;
         }
 
         .header-left {
             display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-
-        .header-emblem {
-            width: 56px;
-            height: 56px;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6em;
-            flex-shrink: 0;
-            backdrop-filter: blur(4px);
+            flex-direction: column;
+            gap: 3px;
         }
 
         .header-text h1 {
-            color: #fff;
-            font-size: 1.6em;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            margin: 0 0 3px;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            color: #0a1628;
+            font-size: 1.4em;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            margin: 0;
         }
 
         .header-text .subtitle {
-            color: rgba(255,255,255,0.65);
+            color: #5a6e8a;
             font-size: 0.82em;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .header-right {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
+            align-items: center;
+            gap: 8px;
         }
 
         .header-badge {
-            background: rgba(255,255,255,0.13);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.9);
-            font-size: 0.75em;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            padding: 5px 12px;
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
+            background: #1a2f5e;
+            color: #c8d8e8;
+            font-size: 0.72em;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            padding: 4px 13px;
+            border-radius: 6px;
+        }
+
+        .header-live {
+            background: #f0faf5;
+            border: 1px solid #a7e8cc;
+            color: #0d7a4e;
+            font-size: 0.72em;
+            font-weight: 500;
+            padding: 4px 13px;
+            border-radius: 6px;
         }
 
         .header-date {
-            color: rgba(255,255,255,0.5);
-            font-size: 0.75em;
-            letter-spacing: 0.5px;
-        }
-
-        .header-divider {
-            height: 3px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), rgba(255,255,255,0.18), rgba(255,255,255,0.12), transparent);
+            color: #8a9ab0;
+            font-size: 0.72em;
+            letter-spacing: 0.3px;
         }
 
         .controls {
@@ -535,20 +502,20 @@
 
     <div id="dashboard-view" class="dashboard-container">
         <header class="header">
+            <div class="header-bar"></div>
             <div class="header-inner">
                 <div class="header-left">
-                    <div class="header-emblem">🏛️</div>
                     <div class="header-text">
                         <h1>Akhter Hameed Khan Foundation</h1>
-                        <div class="subtitle">Interim Financial Report &nbsp;·&nbsp; Live Dashboard</div>
+                        <div class="subtitle">Interim Financial Report &nbsp;·&nbsp; Fiscal Year 2025–26</div>
                     </div>
                 </div>
                 <div class="header-right">
-                    <span class="header-badge">🟢 Live Data</span>
+                    <span class="header-badge">IFR Dashboard</span>
+                    <span class="header-live">● Live</span>
                     <span class="header-date" id="header-date"></span>
                 </div>
             </div>
-            <div class="header-divider"></div>
         </header>
 
         <div id="loading-indicator">
