@@ -1,0 +1,2126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akhter Hameed Khan Foundation - Financial Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #ffffff;
+            color: #000;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Loading Screen Styles */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+            background: #f5f5f5;
+        }
+
+        .loading-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 50px 40px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.07);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .loading-logo {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2em;
+        }
+
+        .loading-box h2 {
+            font-size: 1.5em;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .loading-box p {
+            color: #888;
+            font-size: 0.95em;
+            margin-bottom: 30px;
+        }
+
+        .loading-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 30px;
+            text-align: left;
+        }
+
+        .loading-steps li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .loading-steps li:last-child { border-bottom: none; }
+
+        .step-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75em;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+
+        .step-pending { background: #eee; color: #aaa; }
+        .step-loading { background: #fff3cd; color: #d68910; animation: pulse 1s infinite; }
+        .step-done { background: #d4edda; color: #27ae60; }
+        .step-error { background: #fde8e8; color: #e74c3c; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .progress-bar-wrap {
+            background: #eee;
+            border-radius: 50px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2c3e50, #34495e);
+            border-radius: 50px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-container {
+            display: none;
+            max-width: 1600px;
+            margin: 0 auto;
+            animation: fadeIn 0.6s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: #34495e;
+            color: #fff;
+            border-radius: 16px;
+            padding: 0;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 8px 24px rgba(44, 62, 80, 0.3), 0 2px 6px rgba(0,0,0,0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -5%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 22px 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .header-emblem {
+            width: 56px;
+            height: 56px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6em;
+            flex-shrink: 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .header-text h1 {
+            color: #fff;
+            font-size: 1.6em;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin: 0 0 3px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+
+        .header-text .subtitle {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.82em;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .header-badge {
+            background: rgba(255,255,255,0.13);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.9);
+            font-size: 0.75em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 5px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .header-date {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75em;
+            letter-spacing: 0.5px;
+        }
+
+        .header-divider {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), rgba(255,255,255,0.18), rgba(255,255,255,0.12), transparent);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #34495e;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls label {
+            color: #fff;
+            margin-right: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .controls select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .controls select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #executive-summary {
+            background: #34495e;
+            color: #fff;
+        }
+        
+        #executive-summary .section-title {
+            color: #fff;
+        }
+        
+        #executive-summary-text, #narrative-analysis-text {
+            color: #fff;
+        }
+        
+        #narrative-analysis {
+            background: #34495e;
+            color: #fff;
+        }
+
+        #narrative-analysis .section-title {
+            color: #fff;
+        }
+        
+        #comparison-section {
+            background: #34495e;
+            color: #fff;
+        }
+        
+        #comparison-section .section-title {
+            color: #fff;
+        }
+        
+        #income-overview,
+        #expense-overview,
+        #project-breakdown-section,
+        #sahiwal-breakdown-section,
+        #uil-breakdown-section,
+        #orangi-breakdown-section,
+        #nca-breakdown-section,
+        #bat-eap-breakdown-section,
+        #un-women-breakdown-section,
+        #new1-breakdown-section,
+        #core-breakdown-section,
+        #financial-breakdown-section,
+        #investment-breakdown-section,
+        #provident-fund-breakdown-section,
+        #budget-variance-section,
+        #yearly-budget-variance-section,
+        #budget-time-utilization-section {
+            background: #34495e;
+            color: #fff;
+        }
+
+        #income-overview .section-title,
+        #expense-overview .section-title,
+        #project-breakdown-section .section-title,
+        #sahiwal-breakdown-section .section-title,
+        #uil-breakdown-section .section-title,
+        #orangi-breakdown-section .section-title,
+        #nca-breakdown-section .section-title,
+        #bat-eap-breakdown-section .section-title,
+        #un-women-breakdown-section .section-title,
+        #new1-breakdown-section .section-title,
+        #core-breakdown-section .section-title,
+        #financial-breakdown-section .section-title,
+        #investment-breakdown-section .section-title,
+        #provident-fund-breakdown-section .section-title,
+        #budget-variance-section .section-title,
+        #yearly-budget-variance-section .section-title,
+        #budget-time-utilization-section .section-title {
+            color: #fff;
+        }
+        
+        .section-title {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+            font-weight: bold;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            color: #333;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.2s ease;
+        }
+        
+        .clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .clickable-row:hover {
+            background-color: #e0e0e0;
+        }
+
+        .metric-card {
+            background: #34495e;
+            color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        
+        .metric-card:hover {
+            background: #2c3e50;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #ddd;
+            font-size: 1em;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .comparison-table td, .budget-variance-table td, .yearly-budget-variance-table td {
+            font-weight: bold;
+        }
+
+        .budget-variance-table td:nth-child(4), .yearly-budget-variance-table td:nth-child(4) {
+            color: #f44336;
+        }
+        .budget-variance-table td:nth-child(4).positive, .yearly-budget-variance-table td:nth-child(4).positive {
+            color: #4caf50;
+        }
+
+        #loading-indicator {
+            display: none;
+            text-align: center;
+            color: #555;
+            margin-top: 20px;
+        }
+        
+        #error-message {
+            display: none;
+            text-align: center;
+            color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f44336;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn {
+            background-color: #2c3e50;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .back-btn:hover {
+            background-color: #1e2b38;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .section-title {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="upload-view" class="loading-container">
+        <div class="loading-box">
+            <div class="loading-logo">📊</div>
+            <h2>Akhter Hameed Khan Foundation</h2>
+            <p>Connecting to live financial data&hellip;</p>
+            <ul class="loading-steps">
+                <li id="step-income">
+                    <span class="step-icon step-pending" id="step-income-icon">1</span>
+                    <span id="step-income-text">Fetching Income Statement</span>
+                </li>
+                <li id="step-expense">
+                    <span class="step-icon step-pending" id="step-expense-icon">2</span>
+                    <span id="step-expense-text">Fetching Expense Report</span>
+                </li>
+                <li id="step-balance">
+                    <span class="step-icon step-pending" id="step-balance-icon">3</span>
+                    <span id="step-balance-text">Fetching Balance Sheet</span>
+                </li>
+            </ul>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progress-bar"></div>
+            </div>
+            <div id="error-message" style="margin-top:16px; display:none; color:#e74c3c; font-size:0.9em;"></div>
+        </div>
+    </div>
+
+    <div id="dashboard-view" class="dashboard-container">
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="header-emblem">🏛️</div>
+                    <div class="header-text">
+                        <h1>Akhter Hameed Khan Foundation</h1>
+                        <div class="subtitle">Interim Financial Report &nbsp;·&nbsp; Live Dashboard</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <span class="header-badge">🟢 Live Data</span>
+                    <span class="header-date" id="header-date"></span>
+                </div>
+            </div>
+            <div class="header-divider"></div>
+        </header>
+
+        <div id="loading-indicator">
+            <p>Loading data...</p>
+        </div>
+
+        <div class="controls">
+            <label for="month-selector-1">Select First Month:</label>
+            <select id="month-selector-1" onchange="updateDashboard()"></select>
+            <label for="month-selector-2" style="margin-left: 20px;">Select Second Month:</label>
+            <select id="month-selector-2" onchange="updateDashboard()"></select>
+        </div>
+
+        <section id="executive-summary" class="section">
+            <h2 class="section-title">Executive Summary</h2>
+            <p id="executive-summary-text"></p>
+        </section>
+
+        <section id="key-metrics" class="section">
+            <h2 class="section-title">Key Performance Indicators</h2>
+            <div class="metric-grid">
+                <div class="metric-card" id="income-card">
+                    <div id="total-income-metric" class="metric-value"></div>
+                    <div class="metric-label">Total Income</div>
+                </div>
+                <div class="metric-card" id="expense-card">
+                    <div id="total-expense-metric" class="metric-value"></div>
+                    <div class="metric-label">Total Expense</div>
+                </div>
+                <div class="metric-card" id="net-profit-card">
+                    <div id="net-profit-metric" class="metric-value"></div>
+                    <div class="metric-label">Net Profit / Loss</div>
+                </div>
+                <div class="metric-card" id="profit-margin-card">
+                    <div id="profit-margin-metric" class="metric-value"></div>
+                    <div class="metric-label">Profit Margin</div>
+                </div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card" id="project-expense-card">
+                    <div id="total-project-expense-metric" class="metric-value"></div>
+                    <div class="metric-label">Total Project Expenses</div>
+                </div>
+                <div class="metric-card" id="core-expense-card">
+                    <div id="core-expense-metric" class="metric-value"></div>
+                    <div class="metric-label">Core Expenses</div>
+                </div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card" id="assets-card">
+                    <div id="total-assets-metric" class="metric-value"></div>
+                    <div class="metric-label">Assets</div>
+                </div>
+                <div class="metric-card" id="liabilities-card">
+                    <div id="total-liabilities-metric" class="metric-value"></div>
+                    <div class="metric-label">Liabilities</div>
+                </div>
+                <div class="metric-card" id="equity-card">
+                    <div id="total-equity-metric" class="metric-value"></div>
+                    <div class="metric-label">Equity</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="narrative-analysis" class="section">
+            <h2 class="section-title">Narrative Analysis</h2>
+            <p id="narrative-analysis-text"></p>
+        </section>
+
+        <section id="income-overview" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="income-overview-title" style="margin-bottom: 0;">Income Overview</h2>
+                <button id="back-to-income-btn" class="back-btn" style="display: none;">Back to Total Income</button>
+            </div>
+            <table id="income-table">
+                <thead>
+                    <tr><th>Income Source</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="expense-overview" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="expense-overview-title" style="margin-bottom: 0;">Expense Overview</h2>
+                <button id="back-to-expense-btn" class="back-btn" style="display: none;">Back to Total Expense</button>
+            </div>
+            <table id="expense-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="project-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="project-breakdown-title" style="margin-bottom: 0;">Project Expense Breakdown</h2>
+                <button id="back-to-metrics-btn" class="back-btn">Back to Metrics</button>
+            </div>
+            <table id="project-breakdown-table">
+                <thead>
+                    <tr><th>Project</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+        
+        <section id="sahiwal-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="sahiwal-breakdown-title" style="margin-bottom: 0;">Sahiwal Project Breakdown</h2>
+                <button id="back-to-project-btn-sahiwal" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="sahiwal-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="uil-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="uil-breakdown-title" style="margin-bottom: 0;">UIL Project Breakdown</h2>
+                <button id="back-to-project-btn-uil" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="uil-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="orangi-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="orangi-breakdown-title" style="margin-bottom: 0;">Orangi Project Breakdown</h2>
+                <button id="back-to-project-btn-orangi" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="orangi-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="nca-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="nca-breakdown-title" style="margin-bottom: 0;">NCA Project Breakdown</h2>
+                <button id="back-to-project-btn-nca" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="nca-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="bat-eap-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="bat-eap-breakdown-title" style="margin-bottom: 0;">BAT-EAP Project Breakdown</h2>
+                <button id="back-to-project-btn-bat-eap" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="bat-eap-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="un-women-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="un-women-breakdown-title" style="margin-bottom: 0;">UN Women Project Breakdown</h2>
+                <button id="back-to-project-btn-un-women" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="un-women-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="new1-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="new1-breakdown-title" style="margin-bottom: 0;">SDPI Project Breakdown</h2>
+                <button id="back-to-project-btn-new1" class="back-btn">Back to Project Breakdown</button>
+            </div>
+            <table id="new1-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="core-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="core-breakdown-title" style="margin-bottom: 0;">Core Expenses Breakdown</h2>
+                <button id="back-to-metrics-from-core-btn" class="back-btn">Back to Metrics</button>
+            </div>
+            <table id="core-breakdown-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="financial-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title" id="financial-breakdown-title"></h2>
+                <button id="back-to-metrics-from-financial-btn" class="back-btn">Back to Metrics</button>
+                <button id="back-to-assets-btn" class="back-btn" style="display:none; margin-left:10px;">Back to Assets Breakdown</button>
+            </div>
+            <table id="financial-breakdown-table">
+                <thead>
+                    <tr><th>Category</th><th>Amount</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="investment-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title">Investment Breakdown</h2>
+                <button id="back-to-assets-breakdown-btn" class="back-btn">Back to Assets Breakdown</button>
+            </div>
+            <table id="investment-breakdown-table">
+                <thead>
+                    <tr><th>Investment Type</th><th>Amount</th><th>% of Total</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="provident-fund-breakdown-section" class="section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 class="section-title">Provident Fund Payable Breakdown</h2>
+                <button id="back-to-investment-btn" class="back-btn">Back to Investment Breakdown</button>
+            </div>
+            <table id="provident-fund-breakdown-table">
+                <thead>
+                    <tr><th>Category</th><th>Amount</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="comparison-section" class="section">
+            <h2 class="section-title">Month-over-Month Comparison</h2>
+            <table id="comparison-table" class="comparison-table">
+                <thead>
+                    <tr><th>Metric</th><th id="comparison-header-1"></th><th id="comparison-header-2"></th><th>Change</th><th>% Change</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="budget-variance-section" class="section">
+            <h2 class="section-title">Monthly Budget Variance</h2>
+            <table id="budget-variance-table" class="budget-variance-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Budget</th><th>Actual</th><th>Variance</th><th>% Utilization</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+        
+        <section id="yearly-budget-variance-section" class="section">
+            <h2 class="section-title">Yearly Budget Variance (Annual Comparison)</h2>
+            <table id="yearly-budget-variance-table" class="yearly-budget-variance-table">
+                <thead>
+                    <tr><th>Expense Category</th><th>Full Year Budget</th><th>YTD Actual</th><th>Variance vs. Full Year</th><th>% Utilization (YTD/FY)</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="budget-time-utilization-section" class="section">
+            <h2 class="section-title">Budget and Time Utilization (YTD)</h2>
+            <div class="metric-grid">
+                <div class="metric-card" id="budget-utilization-card">
+                    <div id="budget-utilization-metric" class="metric-value"></div>
+                    <div class="metric-label">Total Budget Utilized</div>
+                </div>
+                <div class="metric-card" id="time-utilization-card">
+                    <div id="time-utilization-metric" class="metric-value"></div>
+                    <div class="metric-label">Total Time Utilized</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const SHEETS = {
+            income:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vR25ymKG6u7X5JmeWalr0EFpYvH1QUx-Lj5fQDKrt6OvZTkwNiXYtaFKZAF6LpXNk6O4aYi7_OKK80I/pub?output=csv',
+            expense:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYyzbGwJz5DBtHzngToFnTfvXjgcTbQmfLz9mVIutD6X_6ufr4o3_WANJazbf0bnb-w2rmQdrwFnKm/pub?output=csv',
+            balance:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLzxcrDdPGukeMhELio93dNHKAigzHoBgetyD7_q6nMH-cuUln3Cba3kZGJiym3ITKA17ou9llpfqC/pub?output=csv'
+        };
+
+        const uploadView   = document.getElementById('upload-view');
+        const dashboardView = document.getElementById('dashboard-view');
+
+        let incomeData = [];
+        let expenseData = [];
+        let balanceSheetData = [];
+        let months = [];
+        let expenseHeaders = [];
+        let balanceSheetHeaders = [];
+        let incomeHeaderKey = null;
+        let assetsHeaderKey = null;
+        let liabilitiesHeaderKey = null;
+
+        function setStep(id, state, text) {
+            const icon = document.getElementById('step-' + id + '-icon');
+            const label = document.getElementById('step-' + id + '-text');
+            icon.className = 'step-icon step-' + state;
+            icon.textContent = state === 'done' ? '✓' : state === 'error' ? '✗' : state === 'loading' ? '…' : icon.textContent;
+            if (text) label.textContent = text;
+        }
+
+        function setProgress(pct) {
+            document.getElementById('progress-bar').style.width = pct + '%';
+        }
+
+        const PROXIES = [
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+            url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+            url => `https://thingproxy.freeboard.io/fetch/${url}`
+        ];
+
+        async function fetchCSV(url) {
+            let lastError;
+            for (const proxyFn of PROXIES) {
+                try {
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 10000); // 10s timeout per proxy
+                    const res = await fetch(proxyFn(url), { signal: controller.signal });
+                    clearTimeout(timer);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const text = await res.text();
+                    if (text && text.length > 10) return text; // valid response
+                    throw new Error('Empty response');
+                } catch (e) {
+                    lastError = e;
+                    // try next proxy
+                }
+            }
+            throw new Error('All proxies failed: ' + (lastError?.message || lastError));
+        }
+
+        async function loadAllSheets() {
+            try {
+                setStep('income', 'loading', 'Fetching Income Statement…');
+                setProgress(5);
+                const incomeCsv = await fetchCSV(SHEETS.income);
+                setStep('income', 'done', 'Income Statement loaded ✓');
+                setProgress(35);
+
+                setStep('expense', 'loading', 'Fetching Expense Report…');
+                const expenseCsv = await fetchCSV(SHEETS.expense);
+                setStep('expense', 'done', 'Expense Report loaded ✓');
+                setProgress(65);
+
+                setStep('balance', 'loading', 'Fetching Balance Sheet…');
+                const balanceCsv = await fetchCSV(SHEETS.balance);
+                setStep('balance', 'done', 'Balance Sheet loaded ✓');
+                setProgress(100);
+
+                setTimeout(() => {
+                    uploadView.style.display = 'none';
+                    dashboardView.style.display = 'block';
+                    processFiles(incomeCsv, expenseCsv, balanceCsv);
+                    initDashboard();
+                    const now = new Date();
+                    document.getElementById('header-date').textContent = 'Updated: ' + now.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + now.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+                }, 500);
+
+            } catch (err) {
+                const steps = ['income', 'expense', 'balance'];
+                const failed = steps.find(s => document.getElementById('step-' + s + '-icon').classList.contains('step-loading')) || 'income';
+                setStep(failed, 'error', 'Failed to load data');
+                const errEl = document.getElementById('error-message');
+                errEl.style.display = 'block';
+                errEl.innerHTML = '<b>Could not load data.</b> ' + (err.message || String(err)) +
+                    '<br><br>Make sure you are connected to the internet and the Google Sheets are published: ' +
+                    '<b>File → Share → Publish to web → select sheet → CSV → Publish</b>.';
+            }
+        }
+
+        function showMessage(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.style.display = 'block';
+            el.style.color = isError ? '#f44336' : '#555';
+        }
+
+        function hideMessage(elementId) {
+            document.getElementById(elementId).style.display = 'none';
+        }
+
+        function parseValue(value) {
+            if (value === null || value === undefined) {
+                return 0;
+            }
+            const stringValue = String(value).trim();
+            if (stringValue === '-' || stringValue === '') {
+                return 0;
+            }
+            const cleanedValue = stringValue.replace(/,/g, '');
+            const num = Number(cleanedValue);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function formatCurrency(value) {
+            if (value === null || value === undefined) return 'N/A';
+            const num = parseValue(value);
+            if (isNaN(num)) return 'N/A';
+            return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+        }
+        
+        function formatAbsoluteCurrency(value) {
+            if (value === null || value === undefined) return 'N/A';
+            const num = Math.abs(parseValue(value));
+            if (isNaN(num)) return 'N/A';
+            return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+        }
+
+        function formatPercentage(value) {
+            if (isNaN(value)) return 'N/A';
+            return `${value.toFixed(0)}%`;
+        }
+        
+        function formatAbsolutePercentage(value) {
+            if (isNaN(value)) return 'N/A';
+            return `${Math.abs(value).toFixed(0)}%`;
+        }
+
+        function getMonthName(period) {
+            return period.split('-')[0];
+        }
+
+        function populateMonthSelectors() {
+            const selector1 = document.getElementById('month-selector-1');
+            const selector2 = document.getElementById('month-selector-2');
+
+            selector1.innerHTML = '';
+            selector2.innerHTML = '';
+            months.forEach((month, index) => {
+                const option1 = document.createElement('option');
+                option1.value = index;
+                option1.textContent = month;
+                selector1.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = index;
+                option2.textContent = month;
+                selector2.appendChild(option2);
+            });
+
+            selector1.value = months.length > 0 ? months.length - 1 : '';
+            selector2.value = months.length > 1 ? months.length - 2 : '';
+        }
+        
+        function findIncomeHeaderKey(dataObject, possibleNames) {
+            if (!dataObject || !possibleNames || possibleNames.length === 0) return null;
+            const headers = Object.keys(dataObject);
+            for (const header of headers) {
+                const normalizedHeader = header.replace(/"/g, '').trim().toLowerCase();
+                for (const name of possibleNames) {
+                    const normalizedName = name.replace(/"/g, '').trim().toLowerCase();
+                    if (normalizedHeader.includes(normalizedName)) {
+                        return header;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function processFiles(incomeCsv, expenseCsv, balanceSheetCsv) {
+            hideMessage('error-message');
+            showMessage('loading-indicator', "Loading data...");
+            Papa.parse(incomeCsv, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(incomeResults) {
+                    Papa.parse(expenseCsv, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(expenseResults) {
+                            Papa.parse(balanceSheetCsv, {
+                                header: true,
+                                skipEmptyLines: true,
+                                complete: function(balanceSheetResults) {
+                                    incomeData = incomeResults.data;
+                                    expenseHeaders = Object.keys(expenseResults.data[0]);
+                                    expenseData = expenseResults.data;
+                                    balanceSheetHeaders = Object.keys(balanceSheetResults.data[0]);
+                                    balanceSheetData = balanceSheetResults.data;
+                                    
+                                    Papa.parse(expenseCsv, {
+                                        header: false,
+                                        skipEmptyLines: true,
+                                        complete: function(expResults) {
+                                            expenseHeaders = expResults.data[0];
+                                            expenseData = expResults.data.slice(1);
+                                            
+                                            Papa.parse(balanceSheetCsv, {
+                                                header: false,
+                                                skipEmptyLines: true,
+                                                complete: function(bsResults) {
+                                                    balanceSheetHeaders = bsResults.data[0];
+                                                    balanceSheetData = bsResults.data.slice(1);
+                                                    
+                                                    if (incomeData.length > 0) {
+                                                        incomeHeaderKey = findIncomeHeaderKey(incomeData[0], ['Total Income', 'Income Total']);
+                                                    }
+                                                    
+                                                    if (incomeData.length > 0 && expenseData.length > 0 && balanceSheetData.length > 0 && incomeHeaderKey) {
+                                                        months = incomeData.map(d => d.Period);
+                                                        populateMonthSelectors();
+                                                        updateDashboard();
+                                                        hideMessage('loading-indicator');
+                                                    } else {
+                                                        showMessage('error-message', "Data could not be loaded. Please check your CSV files for content and correct headers ('Period' and 'Total Income').", true);
+                                                        hideMessage('loading-indicator');
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        
+        function updateDashboard() {
+            try {
+                const selectedIndex1 = document.getElementById('month-selector-1').value;
+                const selectedIndex2 = document.getElementById('month-selector-2').value;
+
+                if (selectedIndex1 !== "" && selectedIndex2 !== "") {
+                    populateSummaryTable(selectedIndex1);
+                    populateComparisonTable(selectedIndex1, selectedIndex2);
+                    populateIncomeTable(selectedIndex1);
+                    populateExpenseTable(selectedIndex1);
+                    populateExecutiveSummary(selectedIndex1);
+                    populateNarrativeAnalysis(selectedIndex1, selectedIndex2);
+                    populateBudgetVarianceTable(selectedIndex1);
+                    populateYearlyBudgetVarianceTable(selectedIndex1);
+                    populateBudgetTimeUtilization(selectedIndex1);
+                }
+            } catch (error) {
+                showMessage('error-message', "An error occurred while updating the dashboard. Please check the browser console for details.", true);
+                console.error("An error occurred while updating the dashboard:", error);
+            }
+        }
+
+        function populateSummaryTable(selectedIndex) {
+            const incomeEntry = incomeData[selectedIndex];
+            const incomeTotal = parseValue(incomeEntry ? incomeEntry[incomeHeaderKey] : null);
+
+            const expenseEntry = expenseData[selectedIndex];
+            const sahiwalExpense = parseValue(expenseEntry[22]);
+            const uilExpense = parseValue(expenseEntry[32]);
+            const orangiExpense = parseValue(expenseEntry[42]);
+            const ncaExpense = parseValue(expenseEntry[62]);
+            const coreExpenses = parseValue(expenseEntry[72]);
+            
+            const batEapExpense = parseValue(expenseEntry[82]);
+            const unWomenExpense = parseValue(expenseEntry[92]);
+            const new1Expense = parseValue(expenseEntry[102]);
+            
+            const totalProjectExpense = sahiwalExpense + uilExpense + orangiExpense + ncaExpense + batEapExpense + unWomenExpense + new1Expense;
+            const totalExpense = parseValue(expenseEntry ? expenseEntry[10] : null);
+
+            const balanceSheetEntry = balanceSheetData[selectedIndex];
+            const totalAssets = parseValue(balanceSheetEntry ? balanceSheetEntry[17] : null);
+            const totalLiabilities = parseValue(balanceSheetEntry ? balanceSheetEntry[27] : null);
+            const totalEquity = totalAssets - totalLiabilities;
+
+            const netProfit = incomeTotal - totalExpense;
+            const profitMargin = (netProfit / (incomeTotal || 1)) * 100;
+
+            document.getElementById('total-income-metric').textContent = formatCurrency(incomeTotal);
+            document.getElementById('total-expense-metric').textContent = formatCurrency(totalExpense);
+            document.getElementById('total-project-expense-metric').textContent = formatCurrency(totalProjectExpense);
+            document.getElementById('core-expense-metric').textContent = formatCurrency(coreExpenses);
+            document.getElementById('net-profit-metric').textContent = formatCurrency(netProfit);
+            document.getElementById('profit-margin-metric').textContent = formatPercentage(profitMargin);
+            document.getElementById('total-assets-metric').textContent = formatCurrency(totalAssets);
+            document.getElementById('total-liabilities-metric').textContent = formatCurrency(totalLiabilities);
+            document.getElementById('total-equity-metric').textContent = formatCurrency(totalEquity);
+        }
+
+        function populateComparisonTable(index1, index2) {
+            const tableBody = document.querySelector('#comparison-table tbody');
+            tableBody.innerHTML = '';
+
+            const incomeEntry1 = incomeData[index1];
+            const expenseEntry1 = expenseData[index1];
+            const incomeEntry2 = incomeData[index2];
+            const expenseEntry2 = expenseData[index2];
+
+            const balanceSheetEntry1 = balanceSheetData[index1] || {};
+            const balanceSheetEntry2 = balanceSheetData[index2] || {};
+            
+            document.getElementById('comparison-header-1').textContent = getMonthName(incomeEntry1.Period);
+            document.getElementById('comparison-header-2').textContent = getMonthName(incomeEntry2.Period);
+
+            const income1 = parseValue(incomeEntry1[incomeHeaderKey]);
+            const totalExpense1 = parseValue(expenseEntry1[10]);
+            const assets1 = parseValue(balanceSheetEntry1[17]);
+            const liabilities1 = parseValue(balanceSheetEntry1[27]);
+            const income2 = parseValue(incomeEntry2[incomeHeaderKey]);
+            const totalExpense2 = parseValue(expenseEntry2[10]);
+            const assets2 = parseValue(balanceSheetEntry2[17]);
+            const liabilities2 = parseValue(balanceSheetEntry2[27]);
+
+            const equity1 = assets1 - liabilities1;
+            const equity2 = assets2 - liabilities2;
+
+            const metrics = [
+                { label: 'Total Income', value1: income1, value2: income2 },
+                { label: 'Total Expense', value1: totalExpense1, value2: totalExpense2 },
+                { label: 'Net Profit', value1: income1 - totalExpense1, value2: income2 - totalExpense2 },
+                { label: 'Assets', value1: assets1, value2: assets2 },
+                { label: 'Liabilities', value1: liabilities1, value2: liabilities2 },
+                { label: 'Equity', value1: equity1, value2: equity2 },
+                { label: 'Profit Margin', value1: ((income1 - totalExpense1) / (income1 || 1)) * 100, value2: ((income2 - totalExpense2) / (income2 || 1)) * 100, isPercentage: true },
+            ];
+
+            metrics.forEach(metric => {
+                const change = metric.value1 - metric.value2;
+                const percentChange = (change / (metric.value2 || 1)) * 100;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${metric.label}</td>
+                    <td>${metric.isPercentage ? formatPercentage(metric.value1) : formatCurrency(metric.value1)}</td>
+                    <td>${metric.isPercentage ? formatPercentage(metric.value2) : formatCurrency(metric.value2)}</td>
+                    <td>${metric.isPercentage ? formatPercentage(change) : formatCurrency(change)}</td>
+                    <td style="color: ${percentChange > 0 ? '#4caf50' : '#f44336'};">${formatPercentage(percentChange)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function populateIncomeTable(selectedIndex) {
+            const tableBody = document.querySelector('#income-table tbody');
+            tableBody.innerHTML = '';
+            const data = incomeData[selectedIndex];
+            const total = parseValue(data[incomeHeaderKey]);
+
+            const headers = Object.keys(data).filter(h =>
+                h.toLowerCase() !== 'month' &&
+                h.toLowerCase() !== 'period' &&
+                h.toLowerCase() !== 'year' &&
+                h.toLowerCase() !== incomeHeaderKey.toLowerCase()
+            );
+
+            headers.forEach(header => {
+                const value = parseValue(data[header]);
+                const percentage = (value / (total || 1)) * 100;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${header.replace(' Income', '')}</td>
+                    <td>${formatCurrency(value)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function populateExpenseTable(selectedIndex) {
+            const tableBody = document.querySelector('#expense-table tbody');
+            tableBody.innerHTML = '';
+            const data = expenseData[selectedIndex];
+            const total = parseValue(data[10]);
+            
+            const expenseBreakdownColumns = [1,2,3,4,5,6,7,8,9];
+
+            expenseBreakdownColumns.forEach(index => {
+                const header = expenseHeaders[index];
+                const value = parseValue(data[index]);
+                const percentage = (value / (total || 1)) * 100;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${header}</td>
+                    <td>${formatCurrency(value)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function populateCoreExpenseTable(selectedIndex) {
+            const tableBody = document.querySelector('#core-breakdown-table tbody');
+            tableBody.innerHTML = '';
+            const data = expenseData[selectedIndex];
+            
+            const coreExpenseColumns = [63, 64, 65, 66, 67, 68, 69, 70, 71];
+            const coreTotal = parseValue(data[72]);
+
+            coreExpenseColumns.forEach(index => {
+                const header = expenseHeaders[index];
+                const value = parseValue(data[index]);
+                const percentage = (value / (coreTotal || 1)) * 100;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${header}</td>
+                    <td>${formatCurrency(value)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function populateExecutiveSummary(selectedIndex) {
+            const incomeEntry = incomeData[selectedIndex];
+            const incomeTotal = parseValue(incomeEntry ? incomeEntry[incomeHeaderKey] : null);
+
+            const expenseEntry = expenseData[selectedIndex];
+            const sahiwalExpense = parseValue(expenseEntry[22]);
+            const uilExpense = parseValue(expenseEntry[32]);
+            const orangiExpense = parseValue(expenseEntry[42]);
+            const ncaExpense = parseValue(expenseEntry[62]);
+            
+            const batEapExpense = parseValue(expenseEntry[82]);
+            const unWomenExpense = parseValue(expenseEntry[92]);
+            const new1Expense = parseValue(expenseEntry[102]);
+            
+            const totalProjectExpense = sahiwalExpense + uilExpense + orangiExpense + ncaExpense + batEapExpense + unWomenExpense + new1Expense;
+            const totalExpense = parseValue(expenseEntry ? expenseEntry[10] : null);
+            const netProfit = incomeTotal - totalExpense;
+            const profitMargin = ((netProfit / (incomeTotal || 1)) * 100).toFixed(0);
+
+            const balanceSheetEntry = balanceSheetData[selectedIndex];
+            const totalAssets = parseValue(balanceSheetEntry ? balanceSheetEntry[17] : null);
+            const totalLiabilities = parseValue(balanceSheetEntry ? balanceSheetEntry[27] : null);
+            const totalEquity = totalAssets - totalLiabilities;
+
+            let summaryText;
+            if (netProfit >= 0) {
+                summaryText = `In ${incomeEntry.Period}, the company achieved a total income of ${formatCurrency(incomeTotal)}, with total expenses amounting to ${formatCurrency(totalExpense)}, which includes project expenses of ${formatCurrency(totalProjectExpense)}. This resulted in a net profit of ${formatCurrency(netProfit)}, reflecting a healthy profit margin of ${profitMargin}%. On the balance sheet, the company reports total assets of ${formatCurrency(totalAssets)}, total liabilities of ${formatCurrency(totalLiabilities)}, and an equity of ${formatCurrency(totalEquity)}. The company's financial position remains strong, demonstrating effective revenue generation and cost management.`;
+            } else {
+                summaryText = `In ${incomeEntry.Period}, the company achieved a total income of ${formatCurrency(incomeTotal)}, with total expenses amounting to ${formatCurrency(totalExpense)}, which includes project expenses of ${formatCurrency(totalProjectExpense)}. This resulted in a net loss of ${formatCurrency(Math.abs(netProfit))}, reflecting a loss margin of ${Math.abs(profitMargin)}%. On the balance sheet, the company reports total assets of ${formatCurrency(totalAssets)}, total liabilities of ${formatCurrency(totalLiabilities)}, and an equity of ${formatCurrency(totalEquity)}.`;
+            }
+            
+            document.getElementById('executive-summary-text').textContent = summaryText;
+        }
+
+        function populateNarrativeAnalysis(selectedIndex1, selectedIndex2) {
+            const incomeEntry1 = incomeData[selectedIndex1];
+            const expenseEntry1 = expenseData[selectedIndex1];
+            const incomeEntry2 = incomeData[selectedIndex2];
+            const expenseEntry2 = expenseData[selectedIndex2];
+
+            const netProfit1 = parseValue(incomeEntry1[incomeHeaderKey]) - parseValue(expenseEntry1[10]);
+            const netProfit2 = parseValue(incomeEntry2[incomeHeaderKey]) - parseValue(expenseEntry2[10]);
+            const profitChange = netProfit1 - netProfit2;
+            const profitPercentChange = ((profitChange / (netProfit2 || 1)) * 100).toFixed(0);
+
+            const narrativeText = `Comparing ${incomeEntry1.Period} to ${incomeEntry2.Period}, the company saw a net profit change of ${formatCurrency(profitChange)}, a ${profitChange > 0 ? 'increase' : 'decrease'}. This shift was primarily driven by changes in key income and expense streams. A detailed breakdown shows a change in key areas, requiring further analysis to pinpoint the exact drivers of profitability and efficiency.`;
+            document.getElementById('narrative-analysis-text').textContent = narrativeText;
+        }
+
+        function showInvestmentBreakdown(selectedIndex) {
+            const balanceSheetEntry = balanceSheetData[selectedIndex];
+            const totalInvestment = parseValue(balanceSheetEntry[14]);
+            const providentFundPayable = parseValue(balanceSheetEntry[23]);
+            const coreInvestments = totalInvestment - providentFundPayable;
+
+            const tableBody = document.querySelector('#investment-breakdown-table tbody');
+            tableBody.innerHTML = '';
+
+            const investments = [
+                { name: 'Provident Fund Payable', amount: providentFundPayable, clickable: true },
+                { name: 'Core Investments', amount: coreInvestments }
+            ];
+
+            investments.forEach(investment => {
+                const percentage = (investment.amount / (totalInvestment || 1)) * 100;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${investment.name}</td>
+                    <td>${formatCurrency(investment.amount)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
+                if (investment.clickable) {
+                    row.classList.add('clickable-row');
+                    row.dataset.type = 'provident-fund';
+                }
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+            document.getElementById('un-women-breakdown-section').style.display = 'none';
+            document.getElementById('new1-breakdown-section').style.display = 'none';
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'block';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none';
+            document.getElementById('budget-time-utilization-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideInvestmentBreakdown() {
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            showFinancialBreakdown('assets');
+        }
+
+        function showProvidentFundBreakdown(selectedIndex) {
+            const balanceSheetEntry = balanceSheetData[selectedIndex];
+            const drAyesha = parseValue(balanceSheetEntry[31]);
+            const staff = parseValue(balanceSheetEntry[32]);
+
+            const tableBody = document.querySelector('#provident-fund-breakdown-table tbody');
+            tableBody.innerHTML = '';
+
+            const items = [
+                { label: 'Dr. Ayesha', amount: drAyesha },
+                { label: 'Staff', amount: staff }
+            ];
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.label}</td>
+                    <td>${formatCurrency(item.amount)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'block';
+            document.getElementById('provident-fund-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideProvidentFundBreakdown() {
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            showInvestmentBreakdown(selectedIndex);
+        }
+
+        function showIncomeBreakdown() {
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            const period = incomeData[selectedIndex].Period;
+            document.getElementById('income-overview-title').textContent = `Income Breakdown for ${period}`;
+            document.getElementById('income-overview').style.display = 'block';
+            document.getElementById('back-to-income-btn').style.display = 'inline-block';
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+            document.getElementById('un-women-breakdown-section').style.display = 'none';
+            document.getElementById('new1-breakdown-section').style.display = 'none';
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none';
+            document.getElementById('budget-time-utilization-section').style.display = 'none';
+            populateIncomeTable(selectedIndex);
+            document.getElementById('income-overview').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideIncomeBreakdown() {
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('back-to-income-btn').style.display = 'none';
+            document.getElementById('income-overview-title').textContent = 'Income Overview';
+            document.getElementById('key-metrics').style.display = 'grid';
+            document.getElementById('executive-summary').style.display = 'block';
+            document.getElementById('narrative-analysis').style.display = 'block';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'block';
+            document.getElementById('budget-variance-section').style.display = 'block';
+            document.getElementById('yearly-budget-variance-section').style.display = 'block';
+            document.getElementById('budget-time-utilization-section').style.display = 'block';
+        }
+
+        function showExpenseBreakdown() {
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            const period = incomeData[selectedIndex].Period;
+            
+            document.getElementById('expense-overview-title').textContent = `Total Expense Breakdown for ${period}`;
+            document.getElementById('back-to-expense-btn').textContent = 'Back to Total Expense';
+            document.getElementById('back-to-expense-btn').style.display = 'inline-block';
+            
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+            document.getElementById('un-women-breakdown-section').style.display = 'none';
+            document.getElementById('new1-breakdown-section').style.display = 'none';
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none'; 
+            document.getElementById('budget-time-utilization-section').style.display = 'none'; 
+            
+            document.getElementById('expense-overview').style.display = 'block';
+
+            populateExpenseTable(selectedIndex);
+            document.getElementById('expense-overview').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function showCoreExpenseBreakdown() {
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            const period = incomeData[selectedIndex].Period;
+            
+            document.getElementById('core-breakdown-title').textContent = `Core Expense Breakdown for ${period}`;
+            
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none'; 
+            document.getElementById('budget-time-utilization-section').style.display = 'none'; 
+
+            document.getElementById('core-breakdown-section').style.display = 'block';
+
+            populateCoreExpenseTable(selectedIndex);
+            document.getElementById('core-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideCoreExpenseBreakdown() {
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'grid';
+            document.getElementById('executive-summary').style.display = 'block';
+            document.getElementById('narrative-analysis').style.display = 'block';
+            document.getElementById('comparison-section').style.display = 'block';
+            document.getElementById('budget-variance-section').style.display = 'block';
+            document.getElementById('yearly-budget-variance-section').style.display = 'block';
+            document.getElementById('budget-time-utilization-section').style.display = 'block';
+        }
+
+        function hideExpenseBreakdown() {
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('back-to-expense-btn').style.display = 'none';
+            document.getElementById('expense-overview-title').textContent = 'Expense Overview';
+            document.getElementById('key-metrics').style.display = 'grid';
+            document.getElementById('executive-summary').style.display = 'block';
+            document.getElementById('narrative-analysis').style.display = 'block';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'block';
+            document.getElementById('budget-variance-section').style.display = 'block';
+            document.getElementById('yearly-budget-variance-section').style.display = 'block';
+            document.getElementById('budget-time-utilization-section').style.display = 'block';
+        }
+
+        function showProjectBreakdown() {
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            const expenseEntry = expenseData[selectedIndex];
+            
+            const sahiwalExpense = parseValue(expenseEntry[22]);
+            const uilExpense = parseValue(expenseEntry[32]);
+            const orangiExpense = parseValue(expenseEntry[42]);
+            const ncaExpense = parseValue(expenseEntry[62]);
+            
+            const batEapExpense = parseValue(expenseEntry[82]);
+            const unWomenExpense = parseValue(expenseEntry[92]);
+            const new1Expense = parseValue(expenseEntry[102]);
+            
+            const totalProjectExpense = sahiwalExpense + uilExpense + orangiExpense + ncaExpense + batEapExpense + unWomenExpense + new1Expense;
+
+            const tableBody = document.querySelector('#project-breakdown-table tbody');
+            tableBody.innerHTML = '';
+            
+            const projects = [
+                { name: 'Sahiwal Project', amount: sahiwalExpense },
+                { name: 'UIL Project', amount: uilExpense },
+                { name: 'Orangi Project', amount: orangiExpense },
+                { name: 'NCA Project', amount: ncaExpense },
+                { name: 'BAT-EAP Project', amount: batEapExpense },
+                { name: 'UN Women Project', amount: unWomenExpense },
+                { name: 'SDPI Project', amount: new1Expense }
+            ];
+            
+            const nonZeroProjects = projects.filter(p => p.amount > 0);
+
+            nonZeroProjects.forEach(project => {
+                const percentage = (project.amount / (totalProjectExpense || 1)) * 100;
+                const row = document.createElement('tr');
+                row.className = 'clickable-row';
+                row.dataset.project = project.name;
+                row.innerHTML = `
+                    <td>${project.name}</td>
+                    <td>${formatCurrency(project.amount)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'block';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+            document.getElementById('un-women-breakdown-section').style.display = 'none';
+            document.getElementById('new1-breakdown-section').style.display = 'none';
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none';
+            document.getElementById('budget-time-utilization-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideProjectBreakdown() {
+            document.getElementById('executive-summary').style.display = 'block';
+            document.getElementById('key-metrics').style.display = 'grid';
+            document.getElementById('narrative-analysis').style.display = 'block';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'block';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+            document.getElementById('un-women-breakdown-section').style.display = 'none';
+            document.getElementById('new1-breakdown-section').style.display = 'none';
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'block';
+            document.getElementById('yearly-budget-variance-section').style.display = 'block';
+            document.getElementById('budget-time-utilization-section').style.display = 'block';
+        }
+        
+        function showSpecificProjectBreakdown(projectName) {
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            const expenseEntry = expenseData[selectedIndex];
+            
+            const sahiwalExpense = parseValue(expenseEntry[22]);
+            const uilExpense = parseValue(expenseEntry[32]);
+            const orangiExpense = parseValue(expenseEntry[42]);
+            const ncaExpense = parseValue(expenseEntry[62]);
+            
+            const batEapExpense = parseValue(expenseEntry[82]);
+            const unWomenExpense = parseValue(expenseEntry[92]);
+            const new1Expense = parseValue(expenseEntry[102]);
+            
+            let tableBody;
+            let breakdownColumns;
+            let total;
+            let startIndex;
+
+            if (projectName === 'Sahiwal Project') {
+                tableBody = document.querySelector('#sahiwal-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'block';
+                document.getElementById('uil-breakdown-section').style.display = 'none';
+                document.getElementById('orangi-breakdown-section').style.display = 'none';
+                document.getElementById('nca-breakdown-section').style.display = 'none';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+                document.getElementById('un-women-breakdown-section').style.display = 'none';
+                document.getElementById('new1-breakdown-section').style.display = 'none';
+                startIndex = 13;
+                breakdownColumns = expenseHeaders.slice(startIndex, 22);
+                total = sahiwalExpense;
+
+            } else if (projectName === 'UIL Project') {
+                tableBody = document.querySelector('#uil-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+                document.getElementById('uil-breakdown-section').style.display = 'block';
+                document.getElementById('orangi-breakdown-section').style.display = 'none';
+                document.getElementById('nca-breakdown-section').style.display = 'none';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+                document.getElementById('un-women-breakdown-section').style.display = 'none';
+                document.getElementById('new1-breakdown-section').style.display = 'none';
+                startIndex = 23;
+                breakdownColumns = expenseHeaders.slice(startIndex, 32);
+                total = uilExpense;
+
+            } else if (projectName === 'Orangi Project') {
+                tableBody = document.querySelector('#orangi-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+                document.getElementById('uil-breakdown-section').style.display = 'none';
+                document.getElementById('orangi-breakdown-section').style.display = 'block';
+                document.getElementById('nca-breakdown-section').style.display = 'none';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+                document.getElementById('un-women-breakdown-section').style.display = 'none';
+                document.getElementById('new1-breakdown-section').style.display = 'none';
+                startIndex = 33;
+                breakdownColumns = expenseHeaders.slice(startIndex, 42);
+                total = orangiExpense;
+            } else if (projectName === 'NCA Project') {
+                tableBody = document.querySelector('#nca-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+                document.getElementById('uil-breakdown-section').style.display = 'none';
+                document.getElementById('orangi-breakdown-section').style.display = 'none';
+                document.getElementById('nca-breakdown-section').style.display = 'block';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+                document.getElementById('un-women-breakdown-section').style.display = 'none';
+                document.getElementById('new1-breakdown-section').style.display = 'none';
+                startIndex = 54;
+                breakdownColumns = expenseHeaders.slice(startIndex, 63);
+                total = ncaExpense;
+            } else if (projectName === 'BAT-EAP Project') {
+                tableBody = document.querySelector('#bat-eap-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+                document.getElementById('uil-breakdown-section').style.display = 'none';
+                document.getElementById('orangi-breakdown-section').style.display = 'none';
+                document.getElementById('nca-breakdown-section').style.display = 'none';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'block';
+                document.getElementById('un-women-breakdown-section').style.display = 'none';
+                document.getElementById('new1-breakdown-section').style.display = 'none';
+                startIndex = 73;
+                breakdownColumns = expenseHeaders.slice(startIndex, 82);
+                total = batEapExpense;
+                
+            } else if (projectName === 'UN Women Project') {
+                tableBody = document.querySelector('#un-women-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+                document.getElementById('uil-breakdown-section').style.display = 'none';
+                document.getElementById('orangi-breakdown-section').style.display = 'none';
+                document.getElementById('nca-breakdown-section').style.display = 'none';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+                document.getElementById('un-women-breakdown-section').style.display = 'block';
+                document.getElementById('new1-breakdown-section').style.display = 'none';
+                startIndex = 83;
+                breakdownColumns = expenseHeaders.slice(startIndex, 92);
+                total = unWomenExpense;
+                
+            } else if (projectName === 'SDPI Project') {
+                tableBody = document.querySelector('#new1-breakdown-table tbody');
+                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+                document.getElementById('uil-breakdown-section').style.display = 'none';
+                document.getElementById('orangi-breakdown-section').style.display = 'none';
+                document.getElementById('nca-breakdown-section').style.display = 'none';
+                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+                document.getElementById('un-women-breakdown-section').style.display = 'none';
+                document.getElementById('new1-breakdown-section').style.display = 'block';
+                startIndex = 93;
+                breakdownColumns = expenseHeaders.slice(startIndex, 102);
+                total = new1Expense;
+                
+            } else {
+                return;
+            }
+
+            
+            tableBody.innerHTML = '';
+            
+            breakdownColumns.forEach((header, index) => {
+                const dataIndex = startIndex + index;
+                const value = parseValue(expenseEntry[dataIndex]);
+                
+                const percentage = (value / (total || 1)) * 100;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${header}</td>
+                    <td>${formatCurrency(value)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none';
+            document.getElementById('budget-time-utilization-section').style.display = 'none';
+            
+            if (projectName === 'Sahiwal Project') {
+                document.getElementById('sahiwal-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+            } else if (projectName === 'UIL Project') {
+                document.getElementById('uil-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+            } else if (projectName === 'Orangi Project') {
+                document.getElementById('orangi-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+            } else if (projectName === 'NCA Project') {
+                document.getElementById('nca-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function hideSpecificProjectBreakdown() {
+             document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+             document.getElementById('uil-breakdown-section').style.display = 'none';
+             document.getElementById('orangi-breakdown-section').style.display = 'none';
+             document.getElementById('nca-breakdown-section').style.display = 'none';
+             showProjectBreakdown();
+        }
+
+        function showFinancialBreakdown(type) {
+            const selectedIndex = document.getElementById('month-selector-1').value;
+            const balanceSheetEntry = balanceSheetData[selectedIndex];
+            const tableBody = document.querySelector('#financial-breakdown-table tbody');
+            tableBody.innerHTML = '';
+
+            let items = [];
+            let title = '';
+
+            if (type === 'assets') {
+                title = 'Assets Breakdown';
+                items = [
+                    { label: 'Tangible Assets', index: 3 },
+                    { label: 'Intangible Assets', index: 6 },
+                    { label: 'Banks', index: 9 },
+                    { label: 'Receivables', index: 10 },
+                    { label: 'Investments', index: 14, clickable: true },
+                    { label: 'Advance Tax', index: 15 }
+                ];
+            } else if (type === 'liabilities') {
+                title = 'Liabilities Breakdown';
+                items = [
+                    { label: 'Salaries Payable', index: 21 },
+                    { label: 'Deferred Income', index: 22 },
+                    { label: 'Provident Fund Liability', index: 23 },
+                    { label: 'Income Tax Payable', index: 24 },
+                    { label: 'Other Payable', index: 25 }
+                ];
+            }
+
+            document.getElementById('financial-breakdown-title').textContent = title;
+            items.forEach(item => {
+                const value = parseValue(balanceSheetEntry[item.index]);
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.label}</td><td>${formatCurrency(value)}</td>`;
+                if (item.clickable) {
+                    row.classList.add('clickable-row');
+                    row.dataset.type = 'investments';
+                }
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
+            document.getElementById('uil-breakdown-section').style.display = 'none';
+            document.getElementById('orangi-breakdown-section').style.display = 'none';
+            document.getElementById('nca-breakdown-section').style.display = 'none';
+            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
+            document.getElementById('un-women-breakdown-section').style.display = 'none';
+            document.getElementById('new1-breakdown-section').style.display = 'none';
+            document.getElementById('core-breakdown-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').style.display = 'block';
+            document.getElementById('investment-breakdown-section').style.display = 'none';
+            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
+            document.getElementById('budget-variance-section').style.display = 'none';
+            document.getElementById('yearly-budget-variance-section').style.display = 'none';
+            document.getElementById('budget-time-utilization-section').style.display = 'none';
+            document.getElementById('financial-breakdown-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideFinancialBreakdown() {
+            document.getElementById('financial-breakdown-section').style.display = 'none';
+            document.getElementById('executive-summary').style.display = 'block';
+            document.getElementById('key-metrics').style.display = 'grid';
+            document.getElementById('narrative-analysis').style.display = 'block';
+            document.getElementById('income-overview').style.display = 'none';
+            document.getElementById('expense-overview').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'block';
+            document.getElementById('budget-variance-section').style.display = 'block';
+            document.getElementById('yearly-budget-variance-section').style.display = 'block';
+            document.getElementById('budget-time-utilization-section').style.display = 'block';
+            document.getElementById('key-metrics').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function populateBudgetVarianceTable(selectedIndex) {
+            const tableBody = document.querySelector('#budget-variance-table tbody');
+            tableBody.innerHTML = '';
+            
+            const data = expenseData[selectedIndex];
+
+            const actualColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const budgetColumns = [43, 44, 45, 46, 47, 48, 49, 50, 51];
+
+            const expenseCategories = actualColumns.map(index => expenseHeaders[index]);
+
+            expenseCategories.forEach((category, i) => {
+                const actual = parseValue(data[actualColumns[i]]);
+                const budget = parseValue(data[budgetColumns[i]]);
+                const variance = actual - budget;
+                const budgetUtilizedPercent = (actual / (budget || 1)) * 100;
+
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${category}</td>
+                    <td>${formatCurrency(budget)}</td>
+                    <td>${formatCurrency(actual)}</td>
+                    <td class="${variance > 0 ? '' : 'positive'}">${formatAbsoluteCurrency(variance)}</td>
+                    <td>${formatPercentage(budgetUtilizedPercent)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            const totalActual = parseValue(data[10]);
+            const totalBudget = parseValue(data[52]); 
+            const totalVariance = totalActual - totalBudget;
+            const totalBudgetUtilizedPercent = (totalActual / (totalBudget || 1)) * 100;
+
+            const totalRow = document.createElement('tr');
+            totalRow.innerHTML = `
+                <td><b>Total</b></td>
+                <td><b>${formatCurrency(totalBudget)}</b></td>
+                <td><b>${formatCurrency(totalActual)}</b></td>
+                <td class="${totalVariance > 0 ? '' : 'positive'}"><b>${formatAbsoluteCurrency(totalVariance)}</b></td>
+                <td><b>${formatPercentage(totalBudgetUtilizedPercent)}</b></td>
+            `;
+            tableBody.appendChild(totalRow);
+        }
+
+        function populateYearlyBudgetVarianceTable(selectedIndex) {
+            const tableBody = document.querySelector('#yearly-budget-variance-table tbody');
+            tableBody.innerHTML = '';
+            
+            const fiscalYearStartPeriod = 'Jul-25';
+            let fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
+
+            if (fiscalYearStartIndex === -1) {
+                console.warn(`Fiscal Year start period ${fiscalYearStartPeriod} not found. Starting YTD Actuals from index 0.`);
+                fiscalYearStartIndex = 0;
+            }
+            
+            const fiscalYearEndPeriod = 'Jun-26';
+            let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
+            if (fiscalYearEndIndex === -1) {
+                fiscalYearEndIndex = expenseData.length - 1;
+            }
+            const budgetLoopLimit = Math.min(expenseData.length - 1, fiscalYearEndIndex);
+            
+            const actualColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const budgetColumns = [43, 44, 45, 46, 47, 48, 49, 50, 51];
+            const totalActualIndex = 10;
+            const totalBudgetIndex = 52; 
+
+            const ytdActuals = new Array(actualColumns.length).fill(0);
+            const fullYearBudgets = new Array(budgetColumns.length).fill(0); 
+            let ytdTotalActual = 0;
+            let fullYearTotalBudget = 0;
+
+            for (let i = fiscalYearStartIndex; i <= selectedIndex; i++) {
+                const monthData = expenseData[i];
+                
+                actualColumns.forEach((colIndex, j) => {
+                    ytdActuals[j] += parseValue(monthData[colIndex]);
+                });
+
+                ytdTotalActual += parseValue(monthData[totalActualIndex]);
+            }
+            
+            for (let i = fiscalYearStartIndex; i <= budgetLoopLimit; i++) {
+                const monthData = expenseData[i];
+
+                budgetColumns.forEach((colIndex, j) => {
+                    fullYearBudgets[j] += parseValue(monthData[budgetColumns[j]]);
+                });
+
+                fullYearTotalBudget += parseValue(monthData[totalBudgetIndex]);
+            }
+
+            const expenseCategories = actualColumns.map(index => expenseHeaders[index]);
+
+            expenseCategories.forEach((category, i) => {
+                const actual = ytdActuals[i];
+                const budget = fullYearBudgets[i];
+                const variance = actual - budget;
+                const budgetUtilizedPercent = (actual / (budget || 1)) * 100;
+
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${category}</td>
+                    <td>${formatCurrency(budget)}</td>
+                    <td>${formatCurrency(actual)}</td>
+                    <td class="${variance > 0 ? '' : 'positive'}">${formatAbsoluteCurrency(variance)}</td>
+                    <td>${formatPercentage(budgetUtilizedPercent)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            const totalRow = document.createElement('tr');
+            const totalVariance = ytdTotalActual - fullYearTotalBudget;
+            const totalBudgetUtilizedPercent = (ytdTotalActual / (fullYearTotalBudget || 1)) * 100;
+
+            totalRow.innerHTML = `
+                <td><b>Total Annual Comparison</b></td>
+                <td><b>${formatCurrency(fullYearTotalBudget)}</b></td>
+                <td><b>${formatCurrency(ytdTotalActual)}</b></td>
+                <td class="${totalVariance > 0 ? '' : 'positive'}"><b>${formatAbsoluteCurrency(totalVariance)}</b></td>
+                <td><b>${formatPercentage(totalBudgetUtilizedPercent)}</b></td>
+            `;
+            tableBody.appendChild(totalRow);
+        }
+
+        function populateBudgetTimeUtilization(selectedIndex) {
+            const fiscalYearStartPeriod = 'Jul-25';
+            const totalFYMonths = 12;
+            const fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
+
+            if (fiscalYearStartIndex === -1 || Number(selectedIndex) < fiscalYearStartIndex) {
+                document.getElementById('budget-utilization-metric').textContent = formatPercentage(0);
+                document.getElementById('time-utilization-metric').textContent = formatPercentage(0);
+                document.getElementById('budget-utilization-card').style.backgroundColor = '#34495e';
+                document.getElementById('time-utilization-card').style.backgroundColor = '#34495e';
+                return;
+            }
+
+            const monthsElapsed = Number(selectedIndex) - fiscalYearStartIndex + 1;
+            const timeUtilized = (monthsElapsed / totalFYMonths) * 100;
+
+            const totalActualIndex = 10;
+            const totalBudgetIndex = 52;
+            let ytdTotalActual = 0;
+            let fullYearTotalBudget = 0;
+            
+            for (let i = fiscalYearStartIndex; i <= Number(selectedIndex); i++) {
+                ytdTotalActual += parseValue(expenseData[i][totalActualIndex]);
+            }
+            
+            const fiscalYearEndPeriod = 'Jun-26';
+            let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
+            
+            const budgetLoopLimit = (fiscalYearEndIndex !== -1 && fiscalYearEndIndex >= fiscalYearStartIndex) 
+                                    ? fiscalYearEndIndex 
+                                    : expenseData.length - 1;
+            
+            for (let i = fiscalYearStartIndex; i <= budgetLoopLimit; i++) {
+                fullYearTotalBudget += parseValue(expenseData[i][totalBudgetIndex]);
+            }
+
+            const budgetUtilized = (ytdTotalActual / (fullYearTotalBudget || 1)) * 100;
+
+            document.getElementById('budget-utilization-metric').textContent = formatPercentage(budgetUtilized);
+            document.getElementById('time-utilization-metric').textContent = formatPercentage(timeUtilized);
+            
+            const budgetCard = document.getElementById('budget-utilization-card');
+            const timeCard = document.getElementById('time-utilization-card');
+
+            timeCard.style.backgroundColor = '#27ae60';
+
+            if (budgetUtilized > timeUtilized + 5) { 
+                budgetCard.style.backgroundColor = '#e74c3c';
+            } else if (budgetUtilized > timeUtilized) {
+                budgetCard.style.backgroundColor = '#f39c12';
+            } else if (budgetUtilized < timeUtilized - 5) { 
+                budgetCard.style.backgroundColor = '#1abc9c';
+            } else {
+                budgetCard.style.backgroundColor = '#27ae60';
+            }
+        }
+
+        function initDashboard() {
+            document.getElementById('income-card').addEventListener('click', showIncomeBreakdown);
+            document.getElementById('expense-card').addEventListener('click', showExpenseBreakdown);
+            document.getElementById('core-expense-card').addEventListener('click', showCoreExpenseBreakdown);
+            document.getElementById('project-expense-card').addEventListener('click', showProjectBreakdown);
+            document.getElementById('assets-card').addEventListener('click', () => showFinancialBreakdown('assets'));
+            document.getElementById('liabilities-card').addEventListener('click', () => showFinancialBreakdown('liabilities'));
+            document.getElementById('back-to-income-btn').addEventListener('click', hideIncomeBreakdown);
+            document.getElementById('back-to-expense-btn').addEventListener('click', hideExpenseBreakdown);
+            document.getElementById('back-to-metrics-btn').addEventListener('click', hideProjectBreakdown);
+            document.getElementById('back-to-metrics-from-core-btn').addEventListener('click', hideCoreExpenseBreakdown);
+            
+            document.getElementById('project-breakdown-table').addEventListener('click', (e) => {
+                const row = e.target.closest('.clickable-row');
+                if (row) {
+                    const projectName = row.dataset.project;
+                    showSpecificProjectBreakdown(projectName);
+                }
+            });
+            document.getElementById('back-to-project-btn-sahiwal').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-project-btn-uil').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-project-btn-orangi').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-project-btn-nca').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-project-btn-bat-eap').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-project-btn-un-women').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-project-btn-new1').addEventListener('click', showProjectBreakdown);
+            document.getElementById('back-to-metrics-from-financial-btn').addEventListener('click', hideFinancialBreakdown);
+            document.getElementById('back-to-assets-breakdown-btn').addEventListener('click', hideInvestmentBreakdown);
+            document.getElementById('back-to-investment-btn').addEventListener('click', hideProvidentFundBreakdown);
+
+            document.getElementById('financial-breakdown-table').addEventListener('click', (e) => {
+                const row = e.target.closest('.clickable-row');
+                if (row && row.dataset.type === 'investments') {
+                    const selectedIndex = document.getElementById('month-selector-1').value;
+                    showInvestmentBreakdown(selectedIndex);
+                }
+            });
+
+            document.getElementById('investment-breakdown-table').addEventListener('click', (e) => {
+                const row = e.target.closest('.clickable-row');
+                if (row && row.dataset.type === 'provident-fund') {
+                    const selectedIndex = document.getElementById('month-selector-1').value;
+                    showProvidentFundBreakdown(selectedIndex);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            uploadView.style.display = 'flex';
+            dashboardView.style.display = 'none';
+            loadAllSheets();
+        });
+
+    </script>
+</body>
+</html>
