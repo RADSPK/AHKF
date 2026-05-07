@@ -701,7 +701,7 @@
             </table>
         </section>
 
-        <section id="sahiwal-breakdown-section" class="section" style="display: none;">
+        <section id="sahiwal-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="sahiwal-breakdown-title" style="margin-bottom: 0;">Sahiwal Project Breakdown</h2>
                 <button id="back-to-project-btn-sahiwal" class="back-btn">Back to Project Breakdown</button>
@@ -714,7 +714,7 @@
             </table>
         </section>
 
-        <section id="uil-breakdown-section" class="section" style="display: none;">
+        <section id="uil-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="uil-breakdown-title" style="margin-bottom: 0;">UIL Project Breakdown</h2>
                 <button id="back-to-project-btn-uil" class="back-btn">Back to Project Breakdown</button>
@@ -727,7 +727,7 @@
             </table>
         </section>
 
-        <section id="orangi-breakdown-section" class="section" style="display: none;">
+        <section id="orangi-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="orangi-breakdown-title" style="margin-bottom: 0;">Orangi Project Breakdown</h2>
                 <button id="back-to-project-btn-orangi" class="back-btn">Back to Project Breakdown</button>
@@ -740,7 +740,7 @@
             </table>
         </section>
 
-        <section id="nca-breakdown-section" class="section" style="display: none;">
+        <section id="nca-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="nca-breakdown-title" style="margin-bottom: 0;">NCA Project Breakdown</h2>
                 <button id="back-to-project-btn-nca" class="back-btn">Back to Project Breakdown</button>
@@ -753,7 +753,7 @@
             </table>
         </section>
 
-        <section id="bat-eap-breakdown-section" class="section" style="display: none;">
+        <section id="bat-eap-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="bat-eap-breakdown-title" style="margin-bottom: 0;">BAT-EAP Project Breakdown</h2>
                 <button id="back-to-project-btn-bat-eap" class="back-btn">Back to Project Breakdown</button>
@@ -766,7 +766,7 @@
             </table>
         </section>
 
-        <section id="un-women-breakdown-section" class="section" style="display: none;">
+        <section id="un-women-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="un-women-breakdown-title" style="margin-bottom: 0;">UN Women Project Breakdown</h2>
                 <button id="back-to-project-btn-un-women" class="back-btn">Back to Project Breakdown</button>
@@ -779,7 +779,7 @@
             </table>
         </section>
 
-        <section id="new1-breakdown-section" class="section" style="display: none;">
+        <section id="new1-breakdown-section" class="section project-detail-section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 class="section-title" id="new1-breakdown-title" style="margin-bottom: 0;">SDPI Project Breakdown</h2>
                 <button id="back-to-project-btn-new1" class="back-btn">Back to Project Breakdown</button>
@@ -909,6 +909,14 @@
         let incomeHeaderKey = null;
         let assetsHeaderKey = null;
         let liabilitiesHeaderKey = null;
+
+        // ── Dynamic project detection ──
+        let detectedProjects = [];
+        let detectedCore = null;
+        let detectedTotalExpenseIdx = 10;
+        let detectedTotalBudgetIdx  = 52;
+        let detectedActualCols   = [1,2,3,4,5,6,7,8,9];
+        let detectedBudgetCols   = [43,44,45,46,47,48,49,50,51];
 
         function setStep(id, state, text) {
             const icon = document.getElementById('step-' + id + '-icon');
@@ -1077,6 +1085,111 @@
             return null;
         }
 
+
+        // ─────────────────────────────────────────────────────────
+        //  AUTO-DETECT expense CSV structure from headers
+        // ─────────────────────────────────────────────────────────
+        function autoDetectStructure() {
+            detectedProjects = [];
+            detectedCore = null;
+
+            for (let i = 0; i < expenseHeaders.length; i++) {
+                const h = (expenseHeaders[i] || '').trim();
+                if (!h) continue;
+
+                if (/^total\s+expenses?$/i.test(h)) { detectedTotalExpenseIdx = i; continue; }
+                if (/^(total\s+budget|budget\s+total)$/i.test(h)) { detectedTotalBudgetIdx = i; continue; }
+
+                const m = h.match(/^(.+?)\s+[Tt]otal$/);
+                if (m && !/^total/i.test(h)) {
+                    const prefix = m[1].trim();
+                    if (/budget/i.test(prefix)) continue;
+
+                    const lineItems = [];
+                    for (let j = i - 1; j >= 0 && lineItems.length < 9; j--) {
+                        const ph = (expenseHeaders[j] || '').trim();
+                        if (!ph || /\btotal\b/i.test(ph)) break;
+                        lineItems.unshift(j);
+                    }
+
+                    if (/\bcore\b/i.test(prefix)) {
+                        detectedCore = { name: prefix, totalIdx: i, lineItemIndices: lineItems };
+                    } else {
+                        const sectionId = 'proj-' + prefix.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+                        detectedProjects.push({ name: prefix, displayName: prefix, totalIdx: i, lineItemIndices: lineItems, sectionId });
+                    }
+                }
+            }
+
+            detectedActualCols = [];
+            for (let i = 1; i < detectedTotalExpenseIdx; i++) {
+                const h = (expenseHeaders[i]||'').trim();
+                if (h && !/\btotal\b/i.test(h)) detectedActualCols.push(i);
+            }
+
+            detectedBudgetCols = [];
+            if (detectedTotalBudgetIdx && detectedActualCols.length) {
+                const n = detectedActualCols.length;
+                for (let i = detectedTotalBudgetIdx - n; i < detectedTotalBudgetIdx; i++) {
+                    if (i > 0) detectedBudgetCols.push(i);
+                }
+            }
+            console.log('[IFR] Detected projects:', detectedProjects.map(p=>p.name), '| totalExpIdx:', detectedTotalExpenseIdx, '| totalBudIdx:', detectedTotalBudgetIdx);
+        }
+
+        const LEGACY_SECTION_MAP = {
+            'sahiwal':   'sahiwal-breakdown-section',
+            'uil':       'uil-breakdown-section',
+            'orangi':    'orangi-breakdown-section',
+            'nca':       'nca-breakdown-section',
+            'bat-eap':   'bat-eap-breakdown-section',
+            'bat eap':   'bat-eap-breakdown-section',
+            'un women':  'un-women-breakdown-section',
+            'un-women':  'un-women-breakdown-section',
+            'sdpi':      'new1-breakdown-section',
+            'new1':      'new1-breakdown-section',
+        };
+        function resolveSectionId(proj) {
+            const key = proj.name.toLowerCase().trim();
+            for (const [k, v] of Object.entries(LEGACY_SECTION_MAP)) {
+                if (key === k || key.startsWith(k)) return v;
+            }
+            return proj.sectionId + '-breakdown-section';
+        }
+        function resolveTableId(proj) {
+            const secId = resolveSectionId(proj);
+            const m = {'sahiwal-breakdown-section':'sahiwal-breakdown-table','uil-breakdown-section':'uil-breakdown-table','orangi-breakdown-section':'orangi-breakdown-table','nca-breakdown-section':'nca-breakdown-table','bat-eap-breakdown-section':'bat-eap-breakdown-table','un-women-breakdown-section':'un-women-breakdown-table','new1-breakdown-section':'new1-breakdown-table'};
+            return m[secId] || (proj.sectionId + '-table');
+        }
+
+        function buildProjectSections() {
+            const container = document.getElementById('dashboard-view');
+            const anchor    = document.getElementById('comparison-section');
+            detectedProjects.forEach(proj => {
+                const finalId = resolveSectionId(proj);
+                if (document.getElementById(finalId)) return;
+                const sec = document.createElement('section');
+                sec.id = finalId;
+                sec.className = 'section project-detail-section';
+                sec.style.display = 'none';
+                sec.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                        <h2 class="section-title" style="margin-bottom:0;">${proj.displayName} Breakdown</h2>
+                        <button class="back-btn dyn-back-btn">Back to Project Breakdown</button>
+                    </div>
+                    <table id="${proj.sectionId}-table">
+                        <thead><tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr></thead>
+                        <tbody></tbody>
+                    </table>`;
+                sec.querySelector('.dyn-back-btn').addEventListener('click', showProjectBreakdown);
+                container.insertBefore(sec, anchor);
+            });
+        }
+
+        function hideAllProjectDetailSections() {
+            document.querySelectorAll('.project-detail-section').forEach(el => el.style.display = 'none');
+        }
+
         function processFiles(incomeCsv, expenseCsv, balanceSheetCsv) {
             hideMessage('error-message');
             showMessage('loading-indicator', "Loading data...");
@@ -1104,6 +1217,8 @@
                                         complete: function(expResults) {
                                             expenseHeaders = expResults.data[0];
                                             expenseData = expResults.data.slice(1);
+                                            autoDetectStructure();
+                                            buildProjectSections();
 
                                             Papa.parse(balanceSheetCsv, {
                                                 header: false,
@@ -1164,18 +1279,9 @@
             const incomeTotal = parseValue(incomeEntry ? incomeEntry[incomeHeaderKey] : null);
 
             const expenseEntry = expenseData[selectedIndex];
-            const sahiwalExpense = parseValue(expenseEntry[22]);
-            const uilExpense = parseValue(expenseEntry[32]);
-            const orangiExpense = parseValue(expenseEntry[42]);
-            const ncaExpense = parseValue(expenseEntry[62]);
-            const coreExpenses = parseValue(expenseEntry[72]);
-
-            const batEapExpense = parseValue(expenseEntry[82]);
-            const unWomenExpense = parseValue(expenseEntry[92]);
-            const new1Expense = parseValue(expenseEntry[102]);
-
-            const totalProjectExpense = sahiwalExpense + uilExpense + orangiExpense + ncaExpense + batEapExpense + unWomenExpense + new1Expense;
-            const totalExpense = parseValue(expenseEntry ? expenseEntry[10] : null);
+            const totalProjectExpense = detectedProjects.reduce((sum, p) => sum + parseValue(expenseEntry[p.totalIdx]), 0);
+            const coreExpenses = detectedCore ? parseValue(expenseEntry[detectedCore.totalIdx]) : 0;
+            const totalExpense = parseValue(expenseEntry ? expenseEntry[detectedTotalExpenseIdx] : null);
 
             const balanceSheetEntry = balanceSheetData[selectedIndex];
             const totalAssets = parseValue(balanceSheetEntry ? balanceSheetEntry[17] : null);
@@ -1212,11 +1318,11 @@
             document.getElementById('comparison-header-2').textContent = getMonthName(incomeEntry2.Period);
 
             const income1 = parseValue(incomeEntry1[incomeHeaderKey]);
-            const totalExpense1 = parseValue(expenseEntry1[10]);
+            const totalExpense1 = parseValue(expenseEntry1[detectedTotalExpenseIdx]);
             const assets1 = parseValue(balanceSheetEntry1[17]);
             const liabilities1 = parseValue(balanceSheetEntry1[27]);
             const income2 = parseValue(incomeEntry2[incomeHeaderKey]);
-            const totalExpense2 = parseValue(expenseEntry2[10]);
+            const totalExpense2 = parseValue(expenseEntry2[detectedTotalExpenseIdx]);
             const assets2 = parseValue(balanceSheetEntry2[17]);
             const liabilities2 = parseValue(balanceSheetEntry2[27]);
 
@@ -1279,9 +1385,9 @@
             const tableBody = document.querySelector('#expense-table tbody');
             tableBody.innerHTML = '';
             const data = expenseData[selectedIndex];
-            const total = parseValue(data[10]);
+            const total = parseValue(data[detectedTotalExpenseIdx]);
 
-            const expenseBreakdownColumns = [1,2,3,4,5,6,7,8,9];
+            const expenseBreakdownColumns = detectedActualCols;
 
             expenseBreakdownColumns.forEach(index => {
                 const header = expenseHeaders[index];
@@ -1302,8 +1408,8 @@
             tableBody.innerHTML = '';
             const data = expenseData[selectedIndex];
 
-            const coreExpenseColumns = [63, 64, 65, 66, 67, 68, 69, 70, 71];
-            const coreTotal = parseValue(data[72]);
+            const coreExpenseColumns = detectedCore ? detectedCore.lineItemIndices : [63,64,65,66,67,68,69,70,71];
+            const coreTotal = detectedCore ? parseValue(data[detectedCore.totalIdx]) : parseValue(data[72]);
 
             coreExpenseColumns.forEach(index => {
                 const header = expenseHeaders[index];
@@ -1325,17 +1431,8 @@
             const incomeTotal = parseValue(incomeEntry ? incomeEntry[incomeHeaderKey] : null);
 
             const expenseEntry = expenseData[selectedIndex];
-            const sahiwalExpense = parseValue(expenseEntry[22]);
-            const uilExpense = parseValue(expenseEntry[32]);
-            const orangiExpense = parseValue(expenseEntry[42]);
-            const ncaExpense = parseValue(expenseEntry[62]);
-
-            const batEapExpense = parseValue(expenseEntry[82]);
-            const unWomenExpense = parseValue(expenseEntry[92]);
-            const new1Expense = parseValue(expenseEntry[102]);
-
-            const totalProjectExpense = sahiwalExpense + uilExpense + orangiExpense + ncaExpense + batEapExpense + unWomenExpense + new1Expense;
-            const totalExpense = parseValue(expenseEntry ? expenseEntry[10] : null);
+            const totalProjectExpense = detectedProjects.reduce((sum, p) => sum + parseValue(expenseEntry[p.totalIdx]), 0);
+            const totalExpense = parseValue(expenseEntry ? expenseEntry[detectedTotalExpenseIdx] : null);
             const netProfit = incomeTotal - totalExpense;
             const profitMargin = ((netProfit / (incomeTotal || 1)) * 100).toFixed(0);
 
@@ -1360,8 +1457,8 @@
             const incomeEntry2 = incomeData[selectedIndex2];
             const expenseEntry2 = expenseData[selectedIndex2];
 
-            const netProfit1 = parseValue(incomeEntry1[incomeHeaderKey]) - parseValue(expenseEntry1[10]);
-            const netProfit2 = parseValue(incomeEntry2[incomeHeaderKey]) - parseValue(expenseEntry2[10]);
+            const netProfit1 = parseValue(incomeEntry1[incomeHeaderKey]) - parseValue(expenseEntry1[detectedTotalExpenseIdx]);
+            const netProfit2 = parseValue(incomeEntry2[incomeHeaderKey]) - parseValue(expenseEntry2[detectedTotalExpenseIdx]);
             const profitChange = netProfit1 - netProfit2;
             const profitPercentChange = ((profitChange / (netProfit2 || 1)) * 100).toFixed(0);
 
@@ -1599,42 +1696,19 @@
             const selectedIndex = document.getElementById('month-selector-1').value;
             const expenseEntry = expenseData[selectedIndex];
 
-            const sahiwalExpense = parseValue(expenseEntry[22]);
-            const uilExpense = parseValue(expenseEntry[32]);
-            const orangiExpense = parseValue(expenseEntry[42]);
-            const ncaExpense = parseValue(expenseEntry[62]);
-
-            const batEapExpense = parseValue(expenseEntry[82]);
-            const unWomenExpense = parseValue(expenseEntry[92]);
-            const new1Expense = parseValue(expenseEntry[102]);
-
-            const totalProjectExpense = sahiwalExpense + uilExpense + orangiExpense + ncaExpense + batEapExpense + unWomenExpense + new1Expense;
+            const totalProjectExpense = detectedProjects.reduce((sum, p) => sum + parseValue(expenseEntry[p.totalIdx]), 0);
 
             const tableBody = document.querySelector('#project-breakdown-table tbody');
             tableBody.innerHTML = '';
 
-            const projects = [
-                { name: 'Sahiwal Project', amount: sahiwalExpense },
-                { name: 'UIL Project', amount: uilExpense },
-                { name: 'Orangi Project', amount: orangiExpense },
-                { name: 'NCA Project', amount: ncaExpense },
-                { name: 'BAT-EAP Project', amount: batEapExpense },
-                { name: 'UN Women Project', amount: unWomenExpense },
-                { name: 'SDPI Project', amount: new1Expense }
-            ];
-
-            const nonZeroProjects = projects.filter(p => p.amount > 0);
-
-            nonZeroProjects.forEach(project => {
-                const percentage = (project.amount / (totalProjectExpense || 1)) * 100;
+            detectedProjects.forEach(proj => {
+                const amount = parseValue(expenseEntry[proj.totalIdx]);
+                if (amount === 0) return;
+                const percentage = (amount / (totalProjectExpense || 1)) * 100;
                 const row = document.createElement('tr');
                 row.className = 'clickable-row';
-                row.dataset.project = project.name;
-                row.innerHTML = `
-                    <td>${project.name}</td>
-                    <td>${formatCurrency(project.amount)}</td>
-                    <td>${formatPercentage(percentage)}</td>
-                `;
+                row.dataset.project = proj.displayName;
+                row.innerHTML = `<td>${proj.displayName}</td><td>${formatCurrency(amount)}</td><td>${formatPercentage(percentage)}</td>`;
                 tableBody.appendChild(row);
             });
 
@@ -1644,14 +1718,6 @@
             document.getElementById('income-overview').style.display = 'none';
             document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'block';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-            document.getElementById('un-women-breakdown-section').style.display = 'none';
-            document.getElementById('new1-breakdown-section').style.display = 'none';
             document.getElementById('core-breakdown-section').style.display = 'none';
             document.getElementById('financial-breakdown-section').style.display = 'none';
             document.getElementById('investment-breakdown-section').style.display = 'none';
@@ -1659,6 +1725,8 @@
             document.getElementById('budget-variance-section').style.display = 'none';
             document.getElementById('yearly-budget-variance-section').style.display = 'none';
             document.getElementById('budget-time-utilization-section').style.display = 'none';
+            hideAllProjectDetailSections();
+            document.getElementById('project-breakdown-section').style.display = 'block';
             document.getElementById('project-breakdown-section').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -1690,153 +1758,36 @@
             const selectedIndex = document.getElementById('month-selector-1').value;
             const expenseEntry = expenseData[selectedIndex];
 
-            const sahiwalExpense = parseValue(expenseEntry[22]);
-            const uilExpense = parseValue(expenseEntry[32]);
-            const orangiExpense = parseValue(expenseEntry[42]);
-            const ncaExpense = parseValue(expenseEntry[62]);
+            // Find the detected project by displayName
+            const proj = detectedProjects.find(p => p.displayName === projectName || p.displayName + ' Project' === projectName);
+            if (!proj) { console.warn('[IFR] Project not found:', projectName); return; }
 
-            const batEapExpense = parseValue(expenseEntry[82]);
-            const unWomenExpense = parseValue(expenseEntry[92]);
-            const new1Expense = parseValue(expenseEntry[102]);
+            const total = parseValue(expenseEntry[proj.totalIdx]);
+            const secId  = resolveSectionId(proj);
+            const tblId  = resolveTableId(proj);
 
-            let tableBody;
-            let breakdownColumns;
-            let total;
-            let startIndex;
+            // Hide all project detail sections then show the right one
+            hideAllProjectDetailSections();
+            document.getElementById('project-breakdown-section').style.display = 'none';
 
-            if (projectName === 'Sahiwal Project') {
-                tableBody = document.querySelector('#sahiwal-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'block';
-                document.getElementById('uil-breakdown-section').style.display = 'none';
-                document.getElementById('orangi-breakdown-section').style.display = 'none';
-                document.getElementById('nca-breakdown-section').style.display = 'none';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-                document.getElementById('un-women-breakdown-section').style.display = 'none';
-                document.getElementById('new1-breakdown-section').style.display = 'none';
-                startIndex = 13;
-                breakdownColumns = expenseHeaders.slice(startIndex, 22);
-                total = sahiwalExpense;
+            const section = document.getElementById(secId);
+            if (!section) { console.warn('[IFR] Section not found:', secId); return; }
+            section.style.display = 'block';
 
-            } else if (projectName === 'UIL Project') {
-                tableBody = document.querySelector('#uil-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-                document.getElementById('uil-breakdown-section').style.display = 'block';
-                document.getElementById('orangi-breakdown-section').style.display = 'none';
-                document.getElementById('nca-breakdown-section').style.display = 'none';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-                document.getElementById('un-women-breakdown-section').style.display = 'none';
-                document.getElementById('new1-breakdown-section').style.display = 'none';
-                startIndex = 23;
-                breakdownColumns = expenseHeaders.slice(startIndex, 32);
-                total = uilExpense;
-
-            } else if (projectName === 'Orangi Project') {
-                tableBody = document.querySelector('#orangi-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-                document.getElementById('uil-breakdown-section').style.display = 'none';
-                document.getElementById('orangi-breakdown-section').style.display = 'block';
-                document.getElementById('nca-breakdown-section').style.display = 'none';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-                document.getElementById('un-women-breakdown-section').style.display = 'none';
-                document.getElementById('new1-breakdown-section').style.display = 'none';
-                startIndex = 33;
-                breakdownColumns = expenseHeaders.slice(startIndex, 42);
-                total = orangiExpense;
-            } else if (projectName === 'NCA Project') {
-                tableBody = document.querySelector('#nca-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-                document.getElementById('uil-breakdown-section').style.display = 'none';
-                document.getElementById('orangi-breakdown-section').style.display = 'none';
-                document.getElementById('nca-breakdown-section').style.display = 'block';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-                document.getElementById('un-women-breakdown-section').style.display = 'none';
-                document.getElementById('new1-breakdown-section').style.display = 'none';
-                startIndex = 54;
-                breakdownColumns = expenseHeaders.slice(startIndex, 63);
-                total = ncaExpense;
-            } else if (projectName === 'BAT-EAP Project') {
-                tableBody = document.querySelector('#bat-eap-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-                document.getElementById('uil-breakdown-section').style.display = 'none';
-                document.getElementById('orangi-breakdown-section').style.display = 'none';
-                document.getElementById('nca-breakdown-section').style.display = 'none';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'block';
-                document.getElementById('un-women-breakdown-section').style.display = 'none';
-                document.getElementById('new1-breakdown-section').style.display = 'none';
-                startIndex = 73;
-                breakdownColumns = expenseHeaders.slice(startIndex, 82);
-                total = batEapExpense;
-
-            } else if (projectName === 'UN Women Project') {
-                tableBody = document.querySelector('#un-women-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-                document.getElementById('uil-breakdown-section').style.display = 'none';
-                document.getElementById('orangi-breakdown-section').style.display = 'none';
-                document.getElementById('nca-breakdown-section').style.display = 'none';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-                document.getElementById('un-women-breakdown-section').style.display = 'block';
-                document.getElementById('new1-breakdown-section').style.display = 'none';
-                startIndex = 83;
-                breakdownColumns = expenseHeaders.slice(startIndex, 92);
-                total = unWomenExpense;
-
-            } else if (projectName === 'SDPI Project') {
-                tableBody = document.querySelector('#new1-breakdown-table tbody');
-                document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-                document.getElementById('uil-breakdown-section').style.display = 'none';
-                document.getElementById('orangi-breakdown-section').style.display = 'none';
-                document.getElementById('nca-breakdown-section').style.display = 'none';
-                document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-                document.getElementById('un-women-breakdown-section').style.display = 'none';
-                document.getElementById('new1-breakdown-section').style.display = 'block';
-                startIndex = 93;
-                breakdownColumns = expenseHeaders.slice(startIndex, 102);
-                total = new1Expense;
-
-            } else {
-                return;
-            }
-
-
+            const tableBody = document.querySelector('#' + tblId + ' tbody');
+            if (!tableBody) { console.warn('[IFR] Table not found:', tblId); return; }
             tableBody.innerHTML = '';
 
-            breakdownColumns.forEach((header, index) => {
-                const dataIndex = startIndex + index;
-                const value = parseValue(expenseEntry[dataIndex]);
-
-                const percentage = (value / (total || 1)) * 100;
+            proj.lineItemIndices.forEach(idx => {
+                const header = expenseHeaders[idx];
+                const value  = parseValue(expenseEntry[idx]);
+                const pct    = (value / (total || 1)) * 100;
                 const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${header}</td>
-                    <td>${formatCurrency(value)}</td>
-                    <td>${formatPercentage(percentage)}</td>
-                `;
+                row.innerHTML = `<td>${header}</td><td>${formatCurrency(value)}</td><td>${formatPercentage(pct)}</td>`;
                 tableBody.appendChild(row);
             });
 
-            document.getElementById('executive-summary').style.display = 'none';
-            document.getElementById('key-metrics').style.display = 'none';
-            document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
-            document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none';
-            document.getElementById('budget-time-utilization-section').style.display = 'none';
-
-            if (projectName === 'Sahiwal Project') {
-                document.getElementById('sahiwal-breakdown-section').scrollIntoView({ behavior: 'smooth' });
-            } else if (projectName === 'UIL Project') {
-                document.getElementById('uil-breakdown-section').scrollIntoView({ behavior: 'smooth' });
-            } else if (projectName === 'Orangi Project') {
-                document.getElementById('orangi-breakdown-section').scrollIntoView({ behavior: 'smooth' });
-            } else if (projectName === 'NCA Project') {
-                document.getElementById('nca-breakdown-section').scrollIntoView({ behavior: 'smooth' });
-            }
+            section.scrollIntoView({ behavior: 'smooth' });
         }
 
         function hideSpecificProjectBreakdown() {
@@ -1933,8 +1884,8 @@
 
             const data = expenseData[selectedIndex];
 
-            const actualColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            const budgetColumns = [43, 44, 45, 46, 47, 48, 49, 50, 51];
+            const actualColumns = detectedActualCols;
+            const budgetColumns = detectedBudgetCols;
 
             const expenseCategories = actualColumns.map(index => expenseHeaders[index]);
 
@@ -1956,8 +1907,8 @@
                 tableBody.appendChild(row);
             });
 
-            const totalActual = parseValue(data[10]);
-            const totalBudget = parseValue(data[52]); 
+            const totalActual = parseValue(data[detectedTotalExpenseIdx]);
+            const totalBudget = parseValue(data[detectedTotalBudgetIdx]); 
             const totalVariance = totalActual - totalBudget;
             const totalBudgetUtilizedPercent = (totalActual / (totalBudget || 1)) * 100;
 
@@ -1991,10 +1942,10 @@
             }
             const budgetLoopLimit = Math.min(expenseData.length - 1, fiscalYearEndIndex);
 
-            const actualColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            const budgetColumns = [43, 44, 45, 46, 47, 48, 49, 50, 51];
-            const totalActualIndex = 10;
-            const totalBudgetIndex = 52; 
+            const actualColumns = detectedActualCols;
+            const budgetColumns = detectedBudgetCols;
+            const totalActualIndex = detectedTotalExpenseIdx;
+            const totalBudgetIndex = detectedTotalBudgetIdx; 
 
             const ytdActuals = new Array(actualColumns.length).fill(0);
             const fullYearBudgets = new Array(budgetColumns.length).fill(0); 
@@ -2015,7 +1966,7 @@
                 const monthData = expenseData[i];
 
                 budgetColumns.forEach((colIndex, j) => {
-                    fullYearBudgets[j] += parseValue(monthData[budgetColumns[j]]);
+                    fullYearBudgets[j] += parseValue(monthData[colIndex]);
                 });
 
                 fullYearTotalBudget += parseValue(monthData[totalBudgetIndex]);
@@ -2071,8 +2022,8 @@
             const monthsElapsed = Number(selectedIndex) - fiscalYearStartIndex + 1;
             const timeUtilized = (monthsElapsed / totalFYMonths) * 100;
 
-            const totalActualIndex = 10;
-            const totalBudgetIndex = 52;
+            const totalActualIndex = detectedTotalExpenseIdx;
+            const totalBudgetIndex = detectedTotalBudgetIdx;
             let ytdTotalActual = 0;
             let fullYearTotalBudget = 0;
 
@@ -2131,13 +2082,11 @@
                     showSpecificProjectBreakdown(projectName);
                 }
             });
-            document.getElementById('back-to-project-btn-sahiwal').addEventListener('click', showProjectBreakdown);
-            document.getElementById('back-to-project-btn-uil').addEventListener('click', showProjectBreakdown);
-            document.getElementById('back-to-project-btn-orangi').addEventListener('click', showProjectBreakdown);
-            document.getElementById('back-to-project-btn-nca').addEventListener('click', showProjectBreakdown);
-            document.getElementById('back-to-project-btn-bat-eap').addEventListener('click', showProjectBreakdown);
-            document.getElementById('back-to-project-btn-un-women').addEventListener('click', showProjectBreakdown);
-            document.getElementById('back-to-project-btn-new1').addEventListener('click', showProjectBreakdown);
+            // Static project back buttons (legacy)
+            ['sahiwal','uil','orangi','nca','bat-eap','un-women','new1'].forEach(id => {
+                const btn = document.getElementById('back-to-project-btn-' + id);
+                if (btn) btn.addEventListener('click', showProjectBreakdown);
+            });
             document.getElementById('back-to-metrics-from-financial-btn').addEventListener('click', hideFinancialBreakdown);
             document.getElementById('back-to-assets-breakdown-btn').addEventListener('click', hideInvestmentBreakdown);
             document.getElementById('back-to-investment-btn').addEventListener('click', hideProvidentFundBreakdown);
