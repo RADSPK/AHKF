@@ -158,6 +158,7 @@
             height: 400px;
             background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
             pointer-events: none;
+        }
         .header-bar {
             width: 5px;
             background: linear-gradient(180deg, #1a2f5e, #2d4a7a);
@@ -264,6 +265,7 @@
             color: rgba(255,255,255,0.5);
             font-size: 0.75em;
             letter-spacing: 0.5px;
+        }
         .header-live {
             background: #f0faf5;
             border: 1px solid #a7e8cc;
@@ -277,6 +279,7 @@
         .header-divider {
             height: 3px;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), rgba(255,255,255,0.18), rgba(255,255,255,0.12), transparent);
+        }
         .header-date {
             color: #8a9ab0;
             font-size: 0.72em;
@@ -1090,51 +1093,45 @@
         //  AUTO-DETECT expense CSV structure from headers
         // ─────────────────────────────────────────────────────────
         function autoDetectStructure() {
+            // Only detect project blocks and core — expense/budget column indices stay hardcoded
             detectedProjects = [];
             detectedCore = null;
 
+            // Find the first "Total" column position to avoid scanning beyond it
+            // (budget block starts around index 43, we want projects on BOTH sides of it)
             for (let i = 0; i < expenseHeaders.length; i++) {
                 const h = (expenseHeaders[i] || '').trim();
                 if (!h) continue;
 
-                if (/^total\s+expenses?$/i.test(h)) { detectedTotalExpenseIdx = i; continue; }
-                if (/^(total\s+budget|budget\s+total)$/i.test(h)) { detectedTotalBudgetIdx = i; continue; }
-
+                // Match "[Name] Total" pattern — these are project/core block subtotals
+                // Exclude: headers that START with "Total" (like "Total Expense", "Total Budget")
                 const m = h.match(/^(.+?)\s+[Tt]otal$/);
-                if (m && !/^total/i.test(h)) {
-                    const prefix = m[1].trim();
-                    if (/budget/i.test(prefix)) continue;
+                if (!m || /^total/i.test(h)) continue;
 
-                    const lineItems = [];
-                    for (let j = i - 1; j >= 0 && lineItems.length < 9; j--) {
-                        const ph = (expenseHeaders[j] || '').trim();
-                        if (!ph || /\btotal\b/i.test(ph)) break;
-                        lineItems.unshift(j);
-                    }
+                const prefix = m[1].trim();
+                // Skip budget-related totals  
+                if (/budget/i.test(prefix)) continue;
+                // Skip if looks like an expense-category total (single word "Expense" / "Expenses")
+                if (/^expenses?$/i.test(prefix)) continue;
 
-                    if (/\bcore\b/i.test(prefix)) {
-                        detectedCore = { name: prefix, totalIdx: i, lineItemIndices: lineItems };
-                    } else {
-                        const sectionId = 'proj-' + prefix.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-                        detectedProjects.push({ name: prefix, displayName: prefix, totalIdx: i, lineItemIndices: lineItems, sectionId });
-                    }
+                // Collect preceding line-item indices (walk back, stop at empty/Total/Period)
+                const lineItems = [];
+                for (let j = i - 1; j >= 0 && lineItems.length < 9; j--) {
+                    const ph = (expenseHeaders[j] || '').trim();
+                    if (!ph || /\btotal\b/i.test(ph) || /^period$/i.test(ph) || /^month$/i.test(ph)) break;
+                    lineItems.unshift(j);
+                }
+
+                if (/\bcore\b/i.test(prefix)) {
+                    detectedCore = { name: prefix, totalIdx: i, lineItemIndices: lineItems };
+                } else {
+                    const sectionId = 'proj-' + prefix.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+                    detectedProjects.push({ name: prefix, displayName: prefix, totalIdx: i, lineItemIndices: lineItems, sectionId });
                 }
             }
 
-            detectedActualCols = [];
-            for (let i = 1; i < detectedTotalExpenseIdx; i++) {
-                const h = (expenseHeaders[i]||'').trim();
-                if (h && !/\btotal\b/i.test(h)) detectedActualCols.push(i);
-            }
-
-            detectedBudgetCols = [];
-            if (detectedTotalBudgetIdx && detectedActualCols.length) {
-                const n = detectedActualCols.length;
-                for (let i = detectedTotalBudgetIdx - n; i < detectedTotalBudgetIdx; i++) {
-                    if (i > 0) detectedBudgetCols.push(i);
-                }
-            }
-            console.log('[IFR] Detected projects:', detectedProjects.map(p=>p.name), '| totalExpIdx:', detectedTotalExpenseIdx, '| totalBudIdx:', detectedTotalBudgetIdx);
+            console.log('[IFR] Detected projects:', detectedProjects.map(p => p.name + '@' + p.totalIdx));
+            if (detectedCore) console.log('[IFR] Core:', detectedCore.name + '@' + detectedCore.totalIdx);
         }
 
         const LEGACY_SECTION_MAP = {
