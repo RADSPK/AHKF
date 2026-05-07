@@ -592,11 +592,22 @@
                     <span class="header-badge">🟢 Live Data</span>
                     <span class="header-badge">IFR Dashboard</span>
                     <span class="header-live">● Live</span>
+                    <button onclick="toggleDebugPanel()" style="background:transparent;border:1px solid #8a9ab0;color:#5a6e8a;font-size:0.68em;padding:3px 10px;border-radius:5px;cursor:pointer;" title="CSV Structure Debug">🔍 Debug</button>
                     <span class="header-date" id="header-date"></span>
                 </div>
             </div>
             <div class="header-divider"></div>
         </header>
+
+
+        <!-- ── DEBUG PANEL: shows auto-detected CSV structure ── -->
+        <div id="debug-panel" style="display:none; background:#1a1a2e; color:#a8d8ea; border-radius:10px; padding:16px 20px; margin-bottom:16px; font-size:0.78em; font-family:monospace; border:1px solid #2d4a7a;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-weight:700;color:#f0c040;">🔍 CSV Structure Debug</span>
+                <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:#2d4a7a;border:none;color:#a8d8ea;cursor:pointer;padding:3px 10px;border-radius:4px;">✕ Close</button>
+            </div>
+            <div id="debug-content"></div>
+        </div>
 
         <div id="loading-indicator">
             <p>Loading data...</p>
@@ -1093,40 +1104,34 @@
         //  AUTO-DETECT expense CSV structure from headers
         // ─────────────────────────────────────────────────────────
         function autoDetectStructure() {
-            // Only detect project blocks and core — expense/budget column indices stay hardcoded
+            // Detects project/core blocks using the pattern: "Total Expenses [ProjectName]"
+            // e.g. "Total Expenses Sahiwal Project", "Total Expenses Core", "Total Expenses ABC"
             detectedProjects = [];
             detectedCore = null;
 
-            // Find the first "Total" column position to avoid scanning beyond it
-            // (budget block starts around index 43, we want projects on BOTH sides of it)
             for (let i = 0; i < expenseHeaders.length; i++) {
-                const h = (expenseHeaders[i] || '').trim();
+                const h = (expenseHeaders[i] || '').trim().replace(/^"+|"+$/g, ''); // strip quotes
                 if (!h) continue;
 
-                // Match "[Name] Total" pattern — these are project/core block subtotals
-                // Exclude: headers that START with "Total" (like "Total Expense", "Total Budget")
-                const m = h.match(/^(.+?)\s+[Tt]otal$/);
-                if (!m || /^total/i.test(h)) continue;
+                // Pattern: "Total Expenses [Name]" or "Total Expense [Name]"
+                const m = h.match(/^Total\s+Expenses?\s+(.+)$/i);
+                if (!m) continue;
 
-                const prefix = m[1].trim();
-                // Skip budget-related totals  
-                if (/budget/i.test(prefix)) continue;
-                // Skip if looks like an expense-category total (single word "Expense" / "Expenses")
-                if (/^expenses?$/i.test(prefix)) continue;
+                const projName = m[1].trim();
 
-                // Collect preceding line-item indices (walk back, stop at empty/Total/Period)
+                // Collect preceding line-item indices (walk back, stop at a Total/empty/Period col)
                 const lineItems = [];
                 for (let j = i - 1; j >= 0 && lineItems.length < 9; j--) {
                     const ph = (expenseHeaders[j] || '').trim();
-                    if (!ph || /\btotal\b/i.test(ph) || /^period$/i.test(ph) || /^month$/i.test(ph)) break;
+                    if (!ph || /\btotal\b/i.test(ph) || /^(period|month|year)$/i.test(ph)) break;
                     lineItems.unshift(j);
                 }
 
-                if (/\bcore\b/i.test(prefix)) {
-                    detectedCore = { name: prefix, totalIdx: i, lineItemIndices: lineItems };
+                if (/\bcore\b/i.test(projName)) {
+                    detectedCore = { name: projName, totalIdx: i, lineItemIndices: lineItems };
                 } else {
-                    const sectionId = 'proj-' + prefix.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-                    detectedProjects.push({ name: prefix, displayName: prefix, totalIdx: i, lineItemIndices: lineItems, sectionId });
+                    const sectionId = 'proj-' + projName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                    detectedProjects.push({ name: projName, displayName: projName, totalIdx: i, lineItemIndices: lineItems, sectionId });
                 }
             }
 
@@ -1134,29 +1139,88 @@
             if (detectedCore) console.log('[IFR] Core:', detectedCore.name + '@' + detectedCore.totalIdx);
         }
 
-        const LEGACY_SECTION_MAP = {
-            'sahiwal':   'sahiwal-breakdown-section',
-            'uil':       'uil-breakdown-section',
-            'orangi':    'orangi-breakdown-section',
-            'nca':       'nca-breakdown-section',
-            'bat-eap':   'bat-eap-breakdown-section',
-            'bat eap':   'bat-eap-breakdown-section',
-            'un women':  'un-women-breakdown-section',
-            'un-women':  'un-women-breakdown-section',
-            'sdpi':      'new1-breakdown-section',
-            'new1':      'new1-breakdown-section',
-        };
-        function resolveSectionId(proj) {
-            const key = proj.name.toLowerCase().trim();
-            for (const [k, v] of Object.entries(LEGACY_SECTION_MAP)) {
-                if (key === k || key.startsWith(k)) return v;
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debug-panel');
+            if (panel.style.display === 'none') {
+                populateDebugPanel();
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
             }
+        }
+
+        function populateDebugPanel() {
+            const lines = [];
+            lines.push(`<b style="color:#f0c040;">Expense CSV Headers (${expenseHeaders.length} columns total)</b>`);
+            lines.push('<div style="margin:6px 0;opacity:0.6;font-size:0.9em;">Col# : Header Name</div>');
+            
+            // Show all headers with index
+            const headerDump = expenseHeaders.map((h, i) => {
+                const h2 = (h || '').trim();
+                const isTotalCol = /total/i.test(h2);
+                const color = isTotalCol ? '#f0c040' : '#a8d8ea';
+                return `<span style="color:${color}">[${String(i).padStart(3,' ')}] ${h2 || '<empty>'}</span>`;
+            }).join('  ');
+            lines.push(`<div style="word-break:break-all;line-height:1.8;">${headerDump}</div>`);
+            
+            lines.push('<hr style="border-color:#2d4a7a;margin:10px 0;">');
+            lines.push(`<b style="color:#f0c040;">Detected Config</b>`);
+            lines.push(`<div>totalExpenseIdx: <b>${detectedTotalExpenseIdx}</b> → header: "${expenseHeaders[detectedTotalExpenseIdx] || 'N/A'}"</div>`);
+            lines.push(`<div>totalBudgetIdx:  <b>${detectedTotalBudgetIdx}</b> → header: "${expenseHeaders[detectedTotalBudgetIdx] || 'N/A'}"</div>`);
+            lines.push(`<div>actualCols: [${detectedActualCols.join(', ')}]</div>`);
+            lines.push(`<div>budgetCols: [${detectedBudgetCols.join(', ')}]</div>`);
+            
+            lines.push('<hr style="border-color:#2d4a7a;margin:10px 0;">');
+            if (detectedProjects.length === 0) {
+                lines.push('<span style="color:#e74c3c;font-weight:bold;">⚠ No projects detected! Check header naming below.</span>');
+                lines.push('<div style="margin-top:6px;color:#aaa;">Expected pattern: "<b>ProjectName Total</b>" (e.g. "Sahiwal Total", "NCA Total")</div>');
+                lines.push('<div style="color:#aaa;">Headers containing "Total":</div>');
+                expenseHeaders.forEach((h, i) => {
+                    if (/total/i.test((h||'').trim())) {
+                        lines.push(`<div style="color:#f0c040;margin-left:12px;">[${i}] "${h}"</div>`);
+                    }
+                });
+            } else {
+                lines.push(`<b>Detected Projects (${detectedProjects.length}):</b>`);
+                detectedProjects.forEach(p => {
+                    lines.push(`<div style="margin-left:12px;">• <b>${p.name}</b>: totalIdx=${p.totalIdx}, lineItems=[${p.lineItemIndices.join(',')}]</div>`);
+                });
+            }
+            
+            if (!detectedCore) {
+                lines.push('<div style="color:#e74c3c;margin-top:4px;">⚠ Core block not detected. Expected header containing "core" + "Total" (e.g. "Core Total")</div>');
+            } else {
+                lines.push(`<div style="margin-top:4px;">Core: <b>${detectedCore.name}</b> @ idx ${detectedCore.totalIdx}</div>`);
+            }
+            
+            document.getElementById('debug-content').innerHTML = lines.join('\n');
+        }
+
+                // Maps detected project names to their existing static HTML section/table IDs
+        function resolveSectionId(proj) {
+            const k = proj.name.toLowerCase();
+            if (k.includes('sahiwal'))                    return 'sahiwal-breakdown-section';
+            if (k.includes('uil'))                        return 'uil-breakdown-section';
+            if (k.includes('orangi'))                     return 'orangi-breakdown-section';
+            if (k.includes('nca'))                        return 'nca-breakdown-section';
+            if (k.includes('bat') && k.includes('eap'))   return 'bat-eap-breakdown-section';
+            if (k.includes('un')  && k.includes('women')) return 'un-women-breakdown-section';
+            if (k.includes('sdpi') || k.includes('new1')) return 'new1-breakdown-section';
+            // New / unknown projects → use generated sectionId
             return proj.sectionId + '-breakdown-section';
         }
         function resolveTableId(proj) {
             const secId = resolveSectionId(proj);
-            const m = {'sahiwal-breakdown-section':'sahiwal-breakdown-table','uil-breakdown-section':'uil-breakdown-table','orangi-breakdown-section':'orangi-breakdown-table','nca-breakdown-section':'nca-breakdown-table','bat-eap-breakdown-section':'bat-eap-breakdown-table','un-women-breakdown-section':'un-women-breakdown-table','new1-breakdown-section':'new1-breakdown-table'};
-            return m[secId] || (proj.sectionId + '-table');
+            const tableMap = {
+                'sahiwal-breakdown-section':  'sahiwal-breakdown-table',
+                'uil-breakdown-section':      'uil-breakdown-table',
+                'orangi-breakdown-section':   'orangi-breakdown-table',
+                'nca-breakdown-section':      'nca-breakdown-table',
+                'bat-eap-breakdown-section':  'bat-eap-breakdown-table',
+                'un-women-breakdown-section': 'un-women-breakdown-table',
+                'new1-breakdown-section':     'new1-breakdown-table',
+            };
+            return tableMap[secId] || (proj.sectionId + '-table');
         }
 
         function buildProjectSections() {
