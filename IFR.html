@@ -1923,7 +1923,7 @@
             const tableBody = document.querySelector('#yearly-budget-variance-table tbody');
             tableBody.innerHTML = '';
 
-            const fiscalYearStartPeriod = 'Jul-25';
+            const fiscalYearStartPeriod = 'Jul-26';
             let fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
 
             if (fiscalYearStartIndex === -1) {
@@ -1931,7 +1931,7 @@
                 fiscalYearStartIndex = 0;
             }
 
-            const fiscalYearEndPeriod = 'Jun-26';
+            const fiscalYearEndPeriod = 'Jun-27';
             let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
             if (fiscalYearEndIndex === -1) {
                 fiscalYearEndIndex = expenseData.length - 1;
@@ -2003,7 +2003,7 @@
         }
 
         function populateBudgetTimeUtilization(selectedIndex) {
-            const fiscalYearStartPeriod = 'Jul-25';
+            const fiscalYearStartPeriod = 'Jul-26';
             const totalFYMonths = 12;
             const fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
 
@@ -2027,7 +2027,7 @@
                 ytdTotalActual += parseValue(expenseData[i][totalActualIndex]);
             }
 
-            const fiscalYearEndPeriod = 'Jun-26';
+            const fiscalYearEndPeriod = 'Jun-27';
             let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
 
             const budgetLoopLimit = (fiscalYearEndIndex !== -1 && fiscalYearEndIndex >= fiscalYearStartIndex) 
