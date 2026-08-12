@@ -333,24 +333,27 @@
         #budget-variance-section,
         #yearly-budget-variance-section,
         #budget-time-utilization-section {
-            background: #34495e;
+            background: #1a3a6e;
             color: #fff;
         }
         #budget-time-utilization-section .metric-card {
-            background: rgba(255,255,255,0.12);
-            border-color: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.13);
+            border: 1.5px solid rgba(255,255,255,0.25);
         }
         #budget-time-utilization-section .metric-card:hover {
-            background: rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.2);
         }
         #budget-time-utilization-section .metric-value {
             color: #fff !important;
         }
         #budget-time-utilization-section .metric-divider {
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.45);
         }
         #budget-time-utilization-section .metric-label {
             color: rgba(255,255,255,0.8);
+        }
+        #budget-time-utilization-section .section-title {
+            color: #fff !important;
         }
 
         #income-overview .section-title,
@@ -2033,8 +2036,8 @@
 
             document.getElementById('budget-utilization-metric').textContent = formatPercentage(budgetUtilized);
             document.getElementById('time-utilization-metric').textContent = formatPercentage(timeUtilized);
-            document.getElementById('budget-utilization-card').style.backgroundColor = '';
-            document.getElementById('time-utilization-card').style.backgroundColor = '';
+            document.getElementById('budget-utilization-card').style.removeProperty('background-color');
+            document.getElementById('time-utilization-card').style.removeProperty('background-color');
         }
 
         function initDashboard() {
