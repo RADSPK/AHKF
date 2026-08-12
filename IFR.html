@@ -174,7 +174,7 @@
         }
 
         .header-logo {
-            height: 62px;
+            height: 124px;
             width: auto;
             flex-shrink: 0;
             display: block;
@@ -418,30 +418,43 @@
         }
 
         .metric-card {
-            background: #34495e;
-            color: #fff;
+            background: #f4f7fb;
+            border: 1.5px solid #1a3a6e;
             border-radius: 10px;
-            padding: 20px;
+            padding: 18px 14px;
             text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             cursor: pointer;
+            transition: background 0.15s;
         }
 
         .metric-card:hover {
-            background: #2c3e50;
+            background: #eaf0f9;
         }
 
         .metric-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 5px;
+            font-size: 1.55em;
+            font-weight: 700;
+            color: #0a1628;
+            letter-spacing: -0.3px;
+            margin-bottom: 0;
+        }
+
+        .metric-divider {
+            width: 28px;
+            height: 2px;
+            background: #1a3a6e;
+            margin: 8px auto 7px;
+            border-radius: 2px;
         }
 
         .metric-label {
-            color: #ddd;
-            font-size: 1em;
+            color: #5a7a9e;
+            font-size: 0.78em;
+            letter-spacing: 0.4px;
         }
+
+        .metric-value.profit  { color: #1a7a40; }
+        .metric-value.loss    { color: #a32d2d; }
 
         .metric-grid {
             display: grid;
@@ -574,42 +587,51 @@
             <div class="metric-grid">
                 <div class="metric-card" id="income-card">
                     <div id="total-income-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Income</div>
                 </div>
                 <div class="metric-card" id="expense-card">
                     <div id="total-expense-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Expense</div>
                 </div>
                 <div class="metric-card" id="net-profit-card">
                     <div id="net-profit-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Net Profit / Loss</div>
                 </div>
                 <div class="metric-card" id="profit-margin-card">
                     <div id="profit-margin-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Profit Margin</div>
                 </div>
             </div>
             <div class="metric-grid">
                 <div class="metric-card" id="project-expense-card">
                     <div id="total-project-expense-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Project Expenses</div>
                 </div>
                 <div class="metric-card" id="core-expense-card">
                     <div id="core-expense-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Core Expenses</div>
                 </div>
             </div>
             <div class="metric-grid">
                 <div class="metric-card" id="assets-card">
                     <div id="total-assets-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Assets</div>
                 </div>
                 <div class="metric-card" id="liabilities-card">
                     <div id="total-liabilities-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Liabilities</div>
                 </div>
                 <div class="metric-card" id="equity-card">
                     <div id="total-equity-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Equity</div>
                 </div>
             </div>
@@ -838,10 +860,12 @@
             <div class="metric-grid">
                 <div class="metric-card" id="budget-utilization-card">
                     <div id="budget-utilization-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Budget Utilized</div>
                 </div>
                 <div class="metric-card" id="time-utilization-card">
                     <div id="time-utilization-metric" class="metric-value"></div>
+                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Time Utilized</div>
                 </div>
             </div>
@@ -1243,8 +1267,12 @@
             document.getElementById('total-expense-metric').textContent = formatCurrency(totalExpense);
             document.getElementById('total-project-expense-metric').textContent = formatCurrency(totalProjectExpense);
             document.getElementById('core-expense-metric').textContent = formatCurrency(coreExpenses);
-            document.getElementById('net-profit-metric').textContent = formatCurrency(netProfit);
-            document.getElementById('profit-margin-metric').textContent = formatPercentage(profitMargin);
+            const npEl = document.getElementById('net-profit-metric');
+            npEl.textContent = formatCurrency(netProfit);
+            npEl.className = 'metric-value ' + (netProfit >= 0 ? 'profit' : 'loss');
+            const pmEl = document.getElementById('profit-margin-metric');
+            pmEl.textContent = formatPercentage(profitMargin);
+            pmEl.className = 'metric-value ' + (profitMargin >= 0 ? 'profit' : 'loss');
             document.getElementById('total-assets-metric').textContent = formatCurrency(totalAssets);
             document.getElementById('total-liabilities-metric').textContent = formatCurrency(totalLiabilities);
             document.getElementById('total-equity-metric').textContent = formatCurrency(totalEquity);
