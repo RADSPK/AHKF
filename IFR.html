@@ -336,6 +336,22 @@
             background: #34495e;
             color: #fff;
         }
+        #budget-time-utilization-section .metric-card {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.3);
+        }
+        #budget-time-utilization-section .metric-card:hover {
+            background: rgba(255,255,255,0.18);
+        }
+        #budget-time-utilization-section .metric-value {
+            color: #fff !important;
+        }
+        #budget-time-utilization-section .metric-divider {
+            background: rgba(255,255,255,0.5);
+        }
+        #budget-time-utilization-section .metric-label {
+            color: rgba(255,255,255,0.8);
+        }
 
         #income-overview .section-title,
         #expense-overview .section-title,
@@ -418,7 +434,7 @@
         }
 
         .metric-card {
-            background: #f4f7fb;
+            background: #dce6f4;
             border: 1.5px solid #1a3a6e;
             border-radius: 10px;
             padding: 18px 14px;
@@ -428,7 +444,7 @@
         }
 
         .metric-card:hover {
-            background: #eaf0f9;
+            background: #c8d8ed;
         }
 
         .metric-value {
@@ -448,9 +464,10 @@
         }
 
         .metric-label {
-            color: #5a7a9e;
-            font-size: 0.78em;
-            letter-spacing: 0.4px;
+            color: #2a4a7e;
+            font-size: 0.88em;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .metric-value.profit  { color: #1a7a40; }
@@ -1854,15 +1871,44 @@
             document.getElementById('key-metrics').scrollIntoView({ behavior: 'smooth' });
         }
 
+        // Derive fiscal year start/end indices dynamically from the selected month.
+        // Fiscal year: July → June. E.g. Apr-26 → FY Jul-25 to Jun-26.
+        function getFiscalYearBounds(selectedIndex) {
+            const period = months[selectedIndex]; // e.g. "Apr-26"
+            const parts  = period.split('-');
+            const mon    = parts[0];  // e.g. "Apr"
+            const yr2    = parseInt(parts[1], 10); // e.g. 26
+
+            // If July–December: FY starts this July (yr2), ends next June (yr2+1)
+            // If January–June : FY started previous July (yr2-1), ends this June (yr2)
+            const julMonths = ['Jul','Aug','Sep','Oct','Nov','Dec'];
+            let fyStartYear, fyEndYear;
+            if (julMonths.includes(mon)) {
+                fyStartYear = yr2;
+                fyEndYear   = yr2 + 1;
+            } else {
+                fyStartYear = yr2 - 1;
+                fyEndYear   = yr2;
+            }
+
+            const fyStartPeriod = 'Jul-' + String(fyStartYear).padStart(2,'0');
+            const fyEndPeriod   = 'Jun-' + String(fyEndYear).padStart(2,'0');
+
+            let fyStartIndex = months.indexOf(fyStartPeriod);
+            let fyEndIndex   = months.indexOf(fyEndPeriod);
+
+            if (fyStartIndex === -1) fyStartIndex = 0;
+            if (fyEndIndex   === -1) fyEndIndex   = expenseData.length - 1;
+
+            return { fyStartIndex, fyEndIndex, fyStartPeriod, fyEndPeriod };
+        }
+
         function populateBudgetVarianceTable(selectedIndex) {
             const tableBody = document.querySelector('#budget-variance-table tbody');
             tableBody.innerHTML = '';
-
             const data = expenseData[selectedIndex];
-
             const actualColumns = detectedActualCols;
             const budgetColumns = detectedBudgetCols;
-
             const expenseCategories = actualColumns.map(index => expenseHeaders[index]);
 
             expenseCategories.forEach((category, i) => {
@@ -1870,9 +1916,7 @@
                 const budget = parseValue(data[budgetColumns[i]]);
                 const variance = actual - budget;
                 const budgetUtilizedPercent = (actual / (budget || 1)) * 100;
-
                 const row = document.createElement('tr');
-
                 row.innerHTML = `
                     <td>${category}</td>
                     <td>${formatCurrency(budget)}</td>
@@ -1884,10 +1928,9 @@
             });
 
             const totalActual = parseValue(data[detectedTotalExpenseIdx]);
-            const totalBudget = parseValue(data[detectedTotalBudgetIdx]); 
+            const totalBudget = parseValue(data[detectedTotalBudgetIdx]);
             const totalVariance = totalActual - totalBudget;
             const totalBudgetUtilizedPercent = (totalActual / (totalBudget || 1)) * 100;
-
             const totalRow = document.createElement('tr');
             totalRow.innerHTML = `
                 <td><b>Total</b></td>
@@ -1903,48 +1946,32 @@
             const tableBody = document.querySelector('#yearly-budget-variance-table tbody');
             tableBody.innerHTML = '';
 
-            const fiscalYearStartPeriod = 'Jul-26';
-            let fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
-
-            if (fiscalYearStartIndex === -1) {
-                console.warn(`Fiscal Year start period ${fiscalYearStartPeriod} not found. Starting YTD Actuals from index 0.`);
-                fiscalYearStartIndex = 0;
-            }
-
-            const fiscalYearEndPeriod = 'Jun-27';
-            let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
-            if (fiscalYearEndIndex === -1) {
-                fiscalYearEndIndex = expenseData.length - 1;
-            }
-            const budgetLoopLimit = Math.min(expenseData.length - 1, fiscalYearEndIndex);
+            const { fyStartIndex, fyEndIndex } = getFiscalYearBounds(Number(selectedIndex));
+            const budgetLoopLimit = Math.min(expenseData.length - 1, fyEndIndex);
 
             const actualColumns = detectedActualCols;
             const budgetColumns = detectedBudgetCols;
             const totalActualIndex = detectedTotalExpenseIdx;
-            const totalBudgetIndex = detectedTotalBudgetIdx; 
+            const totalBudgetIndex = detectedTotalBudgetIdx;
 
-            const ytdActuals = new Array(actualColumns.length).fill(0);
-            const fullYearBudgets = new Array(budgetColumns.length).fill(0); 
-            let ytdTotalActual = 0;
+            const ytdActuals      = new Array(actualColumns.length).fill(0);
+            const fullYearBudgets = new Array(budgetColumns.length).fill(0);
+            let ytdTotalActual    = 0;
             let fullYearTotalBudget = 0;
 
-            for (let i = fiscalYearStartIndex; i <= selectedIndex; i++) {
+            for (let i = fyStartIndex; i <= Number(selectedIndex); i++) {
                 const monthData = expenseData[i];
-
                 actualColumns.forEach((colIndex, j) => {
                     ytdActuals[j] += parseValue(monthData[colIndex]);
                 });
-
                 ytdTotalActual += parseValue(monthData[totalActualIndex]);
             }
 
-            for (let i = fiscalYearStartIndex; i <= budgetLoopLimit; i++) {
+            for (let i = fyStartIndex; i <= budgetLoopLimit; i++) {
                 const monthData = expenseData[i];
-
                 budgetColumns.forEach((colIndex, j) => {
                     fullYearBudgets[j] += parseValue(monthData[colIndex]);
                 });
-
                 fullYearTotalBudget += parseValue(monthData[totalBudgetIndex]);
             }
 
@@ -1983,38 +2010,22 @@
         }
 
         function populateBudgetTimeUtilization(selectedIndex) {
-            const fiscalYearStartPeriod = 'Jul-26';
             const totalFYMonths = 12;
-            const fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
+            const { fyStartIndex, fyEndIndex } = getFiscalYearBounds(Number(selectedIndex));
+            const budgetLoopLimit = Math.min(expenseData.length - 1, fyEndIndex);
 
-            if (fiscalYearStartIndex === -1 || Number(selectedIndex) < fiscalYearStartIndex) {
-                document.getElementById('budget-utilization-metric').textContent = formatPercentage(0);
-                document.getElementById('time-utilization-metric').textContent = formatPercentage(0);
-                document.getElementById('budget-utilization-card').style.backgroundColor = '#34495e';
-                document.getElementById('time-utilization-card').style.backgroundColor = '#34495e';
-                return;
-            }
-
-            const monthsElapsed = Number(selectedIndex) - fiscalYearStartIndex + 1;
-            const timeUtilized = (monthsElapsed / totalFYMonths) * 100;
+            const monthsElapsed   = Number(selectedIndex) - fyStartIndex + 1;
+            const timeUtilized    = (monthsElapsed / totalFYMonths) * 100;
 
             const totalActualIndex = detectedTotalExpenseIdx;
             const totalBudgetIndex = detectedTotalBudgetIdx;
-            let ytdTotalActual = 0;
+            let ytdTotalActual     = 0;
             let fullYearTotalBudget = 0;
 
-            for (let i = fiscalYearStartIndex; i <= Number(selectedIndex); i++) {
+            for (let i = fyStartIndex; i <= Number(selectedIndex); i++) {
                 ytdTotalActual += parseValue(expenseData[i][totalActualIndex]);
             }
-
-            const fiscalYearEndPeriod = 'Jun-27';
-            let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
-
-            const budgetLoopLimit = (fiscalYearEndIndex !== -1 && fiscalYearEndIndex >= fiscalYearStartIndex) 
-                                    ? fiscalYearEndIndex 
-                                    : expenseData.length - 1;
-
-            for (let i = fiscalYearStartIndex; i <= budgetLoopLimit; i++) {
+            for (let i = fyStartIndex; i <= budgetLoopLimit; i++) {
                 fullYearTotalBudget += parseValue(expenseData[i][totalBudgetIndex]);
             }
 
@@ -2022,21 +2033,8 @@
 
             document.getElementById('budget-utilization-metric').textContent = formatPercentage(budgetUtilized);
             document.getElementById('time-utilization-metric').textContent = formatPercentage(timeUtilized);
-
-            const budgetCard = document.getElementById('budget-utilization-card');
-            const timeCard = document.getElementById('time-utilization-card');
-
-            timeCard.style.backgroundColor = '#27ae60';
-
-            if (budgetUtilized > timeUtilized + 5) { 
-                budgetCard.style.backgroundColor = '#e74c3c';
-            } else if (budgetUtilized > timeUtilized) {
-                budgetCard.style.backgroundColor = '#f39c12';
-            } else if (budgetUtilized < timeUtilized - 5) { 
-                budgetCard.style.backgroundColor = '#1abc9c';
-            } else {
-                budgetCard.style.backgroundColor = '#27ae60';
-            }
+            document.getElementById('budget-utilization-card').style.backgroundColor = '';
+            document.getElementById('time-utilization-card').style.backgroundColor = '';
         }
 
         function initDashboard() {
