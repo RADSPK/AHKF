@@ -2,11 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <!-- IFR v20260507-1244 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Akhter Hameed Khan Foundation - Financial Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -20,8 +18,8 @@
             padding: 20px;
         }
 
-        /* Loading Screen Styles */
-        .loading-container {
+        /* Upload Page Styles */
+        .upload-container {
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -29,98 +27,87 @@
             min-height: 100vh;
             padding: 20px;
             text-align: center;
-            background: #f5f5f5;
         }
 
-        .loading-box {
-            background: #fff;
-            border-radius: 16px;
-            padding: 50px 40px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-            border: 1px solid rgba(0,0,0,0.07);
-            max-width: 500px;
+        .upload-box {
+            background: #f0f0f0;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            max-width: 600px;
             width: 100%;
+            transition: all 0.3s ease;
         }
 
-        .loading-logo {
-            width: 72px;
-            height: 72px;
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2em;
+        .upload-box h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            color: #000;
         }
 
-        .loading-box h2 {
-            font-size: 1.5em;
-            color: #1a1a2e;
-            margin-bottom: 6px;
-            font-weight: 700;
+        .upload-box p {
+            font-size: 1em;
+            color: #555;
+            margin-bottom: 25px;
         }
 
-        .loading-box p {
-            color: #888;
-            font-size: 0.95em;
-            margin-bottom: 30px;
-        }
-
-        .loading-steps {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 30px;
+        .file-input-group {
+            margin-bottom: 20px;
             text-align: left;
         }
 
-        .loading-steps li {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9em;
-            color: #555;
-        }
-
-        .loading-steps li:last-child { border-bottom: none; }
-
-        .step-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75em;
-            flex-shrink: 0;
+        .file-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            color: #333;
             font-weight: bold;
         }
-
-        .step-pending { background: #eee; color: #aaa; }
-        .step-loading { background: #fff3cd; color: #d68910; animation: pulse 1s infinite; }
-        .step-done { background: #d4edda; color: #27ae60; }
-        .step-error { background: #fde8e8; color: #e74c3c; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .progress-bar-wrap {
-            background: #eee;
-            border-radius: 50px;
-            height: 6px;
-            overflow: hidden;
+        input[type="file"]::file-selector-button {
+            background-color: #2c3e50;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
         }
 
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #2c3e50, #34495e);
+        input[type="file"]::file-selector-button:hover {
+            background-color: #1e2b38;
+        }
+
+        button#upload-btn {
+            background-color: #2c3e50;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
             border-radius: 50px;
-            width: 0%;
-            transition: width 0.5s ease;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button#upload-btn:hover {
+            background-color: #1e2b38;
+            transform: translateY(-2px);
         }
 
         /* Dashboard Styles */
@@ -130,7 +117,7 @@
             margin: 0 auto;
             animation: fadeIn 0.6s ease-in;
         }
-
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -144,102 +131,52 @@
             border: 0.5px solid #c8d0dc;
             box-shadow: 0 4px 16px rgba(10,22,40,0.07), 0 1px 4px rgba(10,22,40,0.04);
             overflow: hidden;
-            position: relative;
             display: flex;
+            flex-direction: column;
         }
-
-        .header::before { content: none; }
-        .header-bar {
-            width: 4px;
-            background: linear-gradient(180deg, #1a2f5e, #2d6a9f);
-            flex-shrink: 0;
-        }
-
-        .header::after { content: none; }
-        .header-inner {
-            flex: 1;
+        .header-main {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 22px 30px;
-            position: relative;
-            z-index: 1;
-            padding: 18px 26px;
+            padding: 14px 22px;
+            gap: 16px;
         }
-
         .header-left {
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 16px;
         }
-
         .header-logo {
-            height: 124px;
+            height: 72px;
             width: auto;
             flex-shrink: 0;
             display: block;
         }
-
-        .header-text h1 {
+        .header-divider-v {
+            width: 1px;
+            height: 52px;
+            background: #dde4ed;
+            flex-shrink: 0;
+        }
+        .header h1 {
             color: #0a1628;
-            font-size: 1.35em;
+            font-size: 1.15em;
             font-weight: 700;
             letter-spacing: 1.8px;
             text-transform: uppercase;
             margin: 0 0 3px;
+            text-shadow: none;
         }
-
-        .header-text .subtitle {
+        .header-subtitle {
             color: #5a7a9e;
-            font-size: 0.78em;
-            letter-spacing: 1.4px;
+            font-size: 0.76em;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
             font-weight: 500;
         }
-
-        .header-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header-badge {
-            background: #1a2f5e;
-            color: #c8d8e8;
-            font-size: 0.72em;
-            font-weight: 600;
-            letter-spacing: 0.6px;
-            padding: 5px 13px;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-
-        .header-date {
-            color: rgba(255,255,255,0.5);
-            font-size: 0.75em;
-            letter-spacing: 0.5px;
-        }
-        .header-live {
-            background: #f0faf5;
-            border: 1px solid #a7e8cc;
-            color: #0d7a4e;
-            font-size: 0.72em;
-            font-weight: 500;
-            padding: 4px 13px;
-            border-radius: 6px;
-        }
-
-        .header-divider {
+        .header-divider-h {
             height: 2px;
             background: linear-gradient(90deg, transparent, #c8d0dc 20%, #c8d0dc 80%, transparent);
-        }
-        .header-date {
-            color: #8a9ab0;
-            font-size: 0.72em;
-            letter-spacing: 0.3px;
         }
 
         .controls {
@@ -289,15 +226,15 @@
             background: #34495e;
             color: #fff;
         }
-
+        
         #executive-summary .section-title {
             color: #fff;
         }
-
+        
         #executive-summary-text, #narrative-analysis-text {
             color: #fff;
         }
-
+        
         #narrative-analysis {
             background: #34495e;
             color: #fff;
@@ -306,26 +243,20 @@
         #narrative-analysis .section-title {
             color: #fff;
         }
-
+        
         #comparison-section {
             background: #34495e;
             color: #fff;
         }
-
+        
         #comparison-section .section-title {
             color: #fff;
         }
-
+        
         #income-overview,
         #expense-overview,
         #project-breakdown-section,
-        #sahiwal-breakdown-section,
-        #uil-breakdown-section,
-        #orangi-breakdown-section,
-        #nca-breakdown-section,
-        #bat-eap-breakdown-section,
-        #un-women-breakdown-section,
-        #new1-breakdown-section,
+        .dynamic-project-section,
         #core-breakdown-section,
         #financial-breakdown-section,
         #investment-breakdown-section,
@@ -333,47 +264,14 @@
         #budget-variance-section,
         #yearly-budget-variance-section,
         #budget-time-utilization-section {
-            background: #1a3a6e;
+            background: #34495e;
             color: #fff;
-        }
-        #budget-time-utilization-section .metric-card {
-            background: rgba(255,255,255,0.13);
-            border: 1.5px solid rgba(255,255,255,0.25);
-        }
-        #budget-time-utilization-section .metric-card:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        #budget-time-utilization-section .metric-card.card-green {
-            background: rgba(39,174,96,0.35);
-            border-color: rgba(39,174,96,0.7);
-        }
-        #budget-time-utilization-section .metric-card.card-red {
-            background: rgba(192,57,43,0.35);
-            border-color: rgba(192,57,43,0.7);
-        }
-        #budget-time-utilization-section .metric-value {
-            color: #fff !important;
-        }
-        #budget-time-utilization-section .metric-divider {
-            background: rgba(255,255,255,0.45);
-        }
-        #budget-time-utilization-section .metric-label {
-            color: rgba(255,255,255,0.8);
-        }
-        #budget-time-utilization-section .section-title {
-            color: #fff !important;
         }
 
         #income-overview .section-title,
         #expense-overview .section-title,
         #project-breakdown-section .section-title,
-        #sahiwal-breakdown-section .section-title,
-        #uil-breakdown-section .section-title,
-        #orangi-breakdown-section .section-title,
-        #nca-breakdown-section .section-title,
-        #bat-eap-breakdown-section .section-title,
-        #un-women-breakdown-section .section-title,
-        #new1-breakdown-section .section-title,
+        .dynamic-project-section .section-title,
         #core-breakdown-section .section-title,
         #financial-breakdown-section .section-title,
         #investment-breakdown-section .section-title,
@@ -383,7 +281,7 @@
         #budget-time-utilization-section .section-title {
             color: #fff;
         }
-
+        
         .section-title {
             color: #333;
             font-size: 1.8em;
@@ -409,7 +307,7 @@
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-
+        
         th {
             background-color: #f2f2f2;
             color: #333;
@@ -418,7 +316,7 @@
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
-
+        
         td {
             padding: 12px 15px;
             text-align: left;
@@ -434,57 +332,41 @@
             background-color: #f1f1f1;
             transition: background-color 0.2s ease;
         }
-
+        
         .clickable-row {
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
-
+        
         .clickable-row:hover {
             background-color: #e0e0e0;
         }
 
         .metric-card {
-            background: #dce6f4;
-            border: 1.5px solid #1a3a6e;
+            background: #34495e;
+            color: #fff;
             border-radius: 10px;
-            padding: 18px 14px;
+            padding: 20px;
             text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             cursor: pointer;
-            transition: background 0.15s, box-shadow 0.15s;
         }
-
+        
         .metric-card:hover {
-            background: #c8d8ed;
-            box-shadow: 0 4px 14px rgba(26,58,110,0.18);
-            transform: translateY(-1px);
+            background: #2c3e50;
         }
 
         .metric-value {
-            font-size: 1.55em;
-            font-weight: 700;
-            color: #0a1628;
-            letter-spacing: -0.3px;
-            margin-bottom: 0;
-        }
-
-        .metric-divider {
-            width: 28px;
-            height: 2px;
-            background: #1a3a6e;
-            margin: 8px auto 7px;
-            border-radius: 2px;
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
         }
 
         .metric-label {
-            color: #2a4a7e;
-            font-size: 0.88em;
-            font-weight: 500;
-            letter-spacing: 0.3px;
+            color: #ddd;
+            font-size: 1em;
         }
-
-        .metric-value.profit  { color: #1a7a40; }
-        .metric-value.loss    { color: #a32d2d; }
 
         .metric-grid {
             display: grid;
@@ -510,7 +392,7 @@
             color: #555;
             margin-top: 20px;
         }
-
+        
         #error-message {
             display: none;
             text-align: center;
@@ -521,7 +403,7 @@
             border: 1px solid #f44336;
             margin-bottom: 20px;
         }
-
+        
         .back-btn {
             background-color: #2c3e50;
             color: #fff;
@@ -533,7 +415,7 @@
             font-weight: bold;
             font-size: 0.9em;
         }
-
+        
         .back-btn:hover {
             background-color: #1e2b38;
         }
@@ -546,240 +428,38 @@
                 font-size: 1.5em;
             }
         }
-
-        /* ── KPI Detail Modal ── */
-        #kpi-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(8,18,36,0.45);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px) brightness(0.75);
-            -webkit-backdrop-filter: blur(10px) brightness(0.75);
-            padding: 24px;
-        }
-        #kpi-modal-overlay.open { display: flex; }
-        #kpi-modal {
-            background: #fff;
-            border-radius: 18px;
-            width: 100%;
-            max-width: 860px;
-            max-height: 86vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 32px 90px rgba(8,18,36,0.45), 0 2px 8px rgba(8,18,36,0.2);
-            animation: modalIn 0.22s cubic-bezier(.2,.8,.4,1);
-        }
-        @keyframes modalIn {
-            from { transform: translateY(30px) scale(0.97); opacity: 0; }
-            to   { transform: translateY(0) scale(1); opacity: 1; }
-        }
-        #kpi-modal-header {
-            background: linear-gradient(135deg, #0a1628 0%, #1a3a6e 100%);
-            padding: 26px 32px 20px;
-            color: #fff;
-            flex-shrink: 0;
-            position: relative;
-        }
-        #kpi-modal-breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.71em;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            min-height: 18px;
-        }
-        .bc-item {
-            cursor: pointer;
-            color: rgba(255,255,255,0.5);
-            transition: color 0.15s;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .bc-item:hover { color: #fff; background: rgba(255,255,255,0.1); }
-        .bc-sep { color: rgba(255,255,255,0.2); }
-        .bc-current { color: rgba(255,255,255,0.35); }
-        #kpi-modal-title {
-            font-size: 0.75em;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.55);
-            margin-bottom: 6px;
-        }
-        #kpi-modal-total {
-            font-size: 2.6em;
-            font-weight: 700;
-            letter-spacing: -1px;
-            color: #fff;
-            line-height: 1;
-        }
-        #kpi-modal-total.profit { color: #7af0aa; }
-        #kpi-modal-total.loss   { color: #ff9a9a; }
-        #kpi-modal-period {
-            font-size: 0.72em;
-            color: rgba(255,255,255,0.38);
-            margin-top: 6px;
-            letter-spacing: 0.4px;
-        }
-        #kpi-modal-close {
-            position: absolute;
-            top: 20px;
-            right: 24px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.18);
-            color: rgba(255,255,255,0.8);
-            border-radius: 50%;
-            width: 34px;
-            height: 34px;
-            font-size: 1.1em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s;
-        }
-        #kpi-modal-close:hover { background: rgba(255,255,255,0.22); color: #fff; }
-        #kpi-modal-body { overflow-y: auto; flex: 1; }
-
-        /* rows */
-        .modal-row {
-            display: flex;
-            align-items: center;
-            padding: 0;
-            border-bottom: 0.5px solid #edf0f6;
-            position: relative;
-            overflow: hidden;
-            cursor: default;
-            transition: background 0.12s;
-        }
-        .modal-row:last-child { border-bottom: none; }
-        .modal-row.drillable { cursor: pointer; }
-        .modal-row.drillable:hover { background: #eef4fd; }
-        .modal-row-bar {
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            background: linear-gradient(90deg, rgba(26,58,110,0.08), rgba(26,58,110,0.02));
-            pointer-events: none;
-            transition: width 0.5s cubic-bezier(.4,0,.2,1);
-        }
-        .modal-row-content {
-            position: relative;
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 15px 32px;
-            gap: 12px;
-        }
-        .modal-row-label {
-            flex: 1;
-            font-size: 0.96em;
-            color: #1a2a40;
-            font-weight: 500;
-        }
-        .modal-row.drillable .modal-row-label::after {
-            content: ' ›';
-            color: #1a3a6e;
-            opacity: 0.4;
-            font-weight: 700;
-            font-size: 1.1em;
-        }
-        .modal-row.drillable:hover .modal-row-label::after { opacity: 1; }
-        .modal-row-pct {
-            font-size: 0.82em;
-            color: #8aabcc;
-            min-width: 44px;
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-        .modal-row-val {
-            font-size: 1em;
-            font-weight: 700;
-            color: #0a1628;
-            min-width: 140px;
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-        /* header row inside body */
-        .modal-header-row {
-            display: flex;
-            padding: 10px 32px;
-            background: #f2f6fb;
-            border-bottom: 1.5px solid #dde4ef;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
-        .modal-header-row span {
-            font-size: 0.7em;
-            font-weight: 600;
-            letter-spacing: 0.7px;
-            text-transform: uppercase;
-            color: #5a7a9e;
-        }
-        .modal-header-row span:first-child { flex: 1; }
-        .modal-header-row span.h-pct { min-width: 44px; text-align: right; }
-        .modal-header-row span.h-val { min-width: 140px; text-align: right; }
-        .modal-empty {
-            padding: 40px 32px;
-            color: #8a9ab0;
-            font-size: 0.92em;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
-    <div id="upload-view" class="loading-container">
-        <div class="loading-box">
-            <div class="loading-logo">📊</div>
-            <h2>Akhter Hameed Khan Foundation</h2>
-            <p>Connecting to live financial data&hellip;</p>
-            <ul class="loading-steps">
-                <li id="step-income">
-                    <span class="step-icon step-pending" id="step-income-icon">1</span>
-                    <span id="step-income-text">Fetching Income Statement</span>
-                </li>
-                <li id="step-expense">
-                    <span class="step-icon step-pending" id="step-expense-icon">2</span>
-                    <span id="step-expense-text">Fetching Expense Report</span>
-                </li>
-                <li id="step-balance">
-                    <span class="step-icon step-pending" id="step-balance-icon">3</span>
-                    <span id="step-balance-text">Fetching Balance Sheet</span>
-                </li>
-            </ul>
-            <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" id="progress-bar"></div>
+    <div id="upload-view" class="upload-container">
+        <div class="upload-box">
+            <div style="font-size:2.2em;margin-bottom:12px;">📊</div>
+            <h1>Akhter Hameed Khan Foundation</h1>
+            <p id="loading-status" style="color:#5a7a9e;margin-top:8px;">Connecting to live financial data…</p>
+            <div id="error-message"></div>
+            <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;font-size:0.85em;color:#8a9ab0;">
+                <div id="step-income">⏳ Fetching Income Statement…</div>
+                <div id="step-expense">⏳ Fetching Expense Report…</div>
+                <div id="step-balance">⏳ Fetching Balance Sheet…</div>
             </div>
-            <div id="error-message" style="margin-top:16px; display:none; color:#e74c3c; font-size:0.9em;"></div>
         </div>
     </div>
 
     <div id="dashboard-view" class="dashboard-container">
         <header class="header">
-            <div class="header-bar"></div>
-            <div class="header-inner">
+            <div class="header-main">
                 <div class="header-left">
                     <img src="data:image/png;base64,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" class="header-logo" alt="AHKF Logo">
-                    <div style="width:1px;height:52px;background:#dde4ed;margin:0 4px;flex-shrink:0;"></div>
-                    <div class="header-text">
+                    <div class="header-divider-v"></div>
+                    <div>
                         <h1>AKHTER HAMEED KHAN FOUNDATION</h1>
-                        <div class="subtitle">Interim Financial Report &nbsp;·&nbsp; Live Dashboard</div>
+                        <div class="header-subtitle">Interim Financial Report &nbsp;·&nbsp; Live Dashboard</div>
                     </div>
                 </div>
-                <div class="header-right">
-                    <span class="header-badge">● Live Data</span>
-                    <span class="header-badge">IFR Dashboard</span>
-                    <span class="header-live">● Live</span>
-                    <span class="header-date" id="header-date"></span>
-                </div>
             </div>
-            <div class="header-divider"></div>
+            <div class="header-divider-h"></div>
         </header>
+
         <div id="loading-indicator">
             <p>Loading data...</p>
         </div>
@@ -801,51 +481,42 @@
             <div class="metric-grid">
                 <div class="metric-card" id="income-card">
                     <div id="total-income-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Income</div>
                 </div>
                 <div class="metric-card" id="expense-card">
                     <div id="total-expense-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Expense</div>
                 </div>
                 <div class="metric-card" id="net-profit-card">
                     <div id="net-profit-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Net Profit / Loss</div>
                 </div>
                 <div class="metric-card" id="profit-margin-card">
                     <div id="profit-margin-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Profit Margin</div>
                 </div>
             </div>
             <div class="metric-grid">
                 <div class="metric-card" id="project-expense-card">
                     <div id="total-project-expense-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Project Expenses</div>
                 </div>
                 <div class="metric-card" id="core-expense-card">
                     <div id="core-expense-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Core Expenses</div>
                 </div>
             </div>
             <div class="metric-grid">
                 <div class="metric-card" id="assets-card">
                     <div id="total-assets-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Assets</div>
                 </div>
                 <div class="metric-card" id="liabilities-card">
                     <div id="total-liabilities-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Liabilities</div>
                 </div>
                 <div class="metric-card" id="equity-card">
                     <div id="total-equity-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Equity</div>
                 </div>
             </div>
@@ -894,97 +565,9 @@
                 <tbody></tbody>
             </table>
         </section>
-
-        <section id="sahiwal-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="sahiwal-breakdown-title" style="margin-bottom: 0;">Sahiwal Project Breakdown</h2>
-                <button id="back-to-project-btn-sahiwal" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="sahiwal-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-
-        <section id="uil-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="uil-breakdown-title" style="margin-bottom: 0;">UIL Project Breakdown</h2>
-                <button id="back-to-project-btn-uil" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="uil-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-
-        <section id="orangi-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="orangi-breakdown-title" style="margin-bottom: 0;">Orangi Project Breakdown</h2>
-                <button id="back-to-project-btn-orangi" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="orangi-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-
-        <section id="nca-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="nca-breakdown-title" style="margin-bottom: 0;">NCA Project Breakdown</h2>
-                <button id="back-to-project-btn-nca" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="nca-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-
-        <section id="bat-eap-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="bat-eap-breakdown-title" style="margin-bottom: 0;">BAT-EAP Project Breakdown</h2>
-                <button id="back-to-project-btn-bat-eap" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="bat-eap-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-
-        <section id="un-women-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="un-women-breakdown-title" style="margin-bottom: 0;">UN Women Project Breakdown</h2>
-                <button id="back-to-project-btn-un-women" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="un-women-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
-
-        <section id="new1-breakdown-section" class="section project-detail-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 class="section-title" id="new1-breakdown-title" style="margin-bottom: 0;">SDPI Project Breakdown</h2>
-                <button id="back-to-project-btn-new1" class="back-btn">Back to Project Breakdown</button>
-            </div>
-            <table id="new1-breakdown-table">
-                <thead>
-                    <tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </section>
+        
+        <!-- Dynamic project breakdown sections are generated by JavaScript -->
+        <div id="dynamic-project-sections"></div>
 
         <section id="core-breakdown-section" class="section" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -1058,7 +641,7 @@
                 <tbody></tbody>
             </table>
         </section>
-
+        
         <section id="yearly-budget-variance-section" class="section">
             <h2 class="section-title">Yearly Budget Variance (Annual Comparison)</h2>
             <table id="yearly-budget-variance-table" class="yearly-budget-variance-table">
@@ -1074,41 +657,18 @@
             <div class="metric-grid">
                 <div class="metric-card" id="budget-utilization-card">
                     <div id="budget-utilization-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Budget Utilized</div>
                 </div>
                 <div class="metric-card" id="time-utilization-card">
                     <div id="time-utilization-metric" class="metric-value"></div>
-                    <div class="metric-divider"></div>
                     <div class="metric-label">Total Time Utilized</div>
                 </div>
             </div>
         </section>
     </div>
 
-
-    <!-- KPI Detail Modal -->
-    <div id="kpi-modal-overlay" onclick="if(event.target===this)closeKpiModal()">
-        <div id="kpi-modal" style="position:relative;">
-            <div id="kpi-modal-header">
-                <div id="kpi-modal-breadcrumb"></div>
-                <div id="kpi-modal-title"></div>
-                <div id="kpi-modal-total"></div>
-                <div id="kpi-modal-period"></div>
-                <button id="kpi-modal-close" onclick="closeKpiModal()">✕</button>
-            </div>
-            <div id="kpi-modal-body"></div>
-        </div>
-    </div>
-
     <script>
-        const SHEETS = {
-            income:   'https://docs.google.com/spreadsheets/d/e/2PACX-1vR25ymKG6u7X5JmeWalr0EFpYvH1QUx-Lj5fQDKrt6OvZTkwNiXYtaFKZAF6LpXNk6O4aYi7_OKK80I/pub?output=csv',
-            expense:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYyzbGwJz5DBtHzngToFnTfvXjgcTbQmfLz9mVIutD6X_6ufr4o3_WANJazbf0bnb-w2rmQdrwFnKm/pub?output=csv',
-            balance:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLzxcrDdPGukeMhELio93dNHKAigzHoBgetyD7_q6nMH-cuUln3Cba3kZGJiym3ITKA17ou9llpfqC/pub?output=csv'
-        };
-
-        const uploadView   = document.getElementById('upload-view');
+        const uploadView = document.getElementById('upload-view');
         const dashboardView = document.getElementById('dashboard-view');
 
         let incomeData = [];
@@ -1121,89 +681,50 @@
         let assetsHeaderKey = null;
         let liabilitiesHeaderKey = null;
 
-        // ── Dynamic project detection ──
-        let detectedProjects = [];
-        let detectedCore = null;
-        let detectedTotalExpenseIdx = 10;
-        let detectedTotalBudgetIdx  = 52;
-        let detectedActualCols   = [1,2,3,4,5,6,7,8,9];
-        let detectedBudgetCols   = [43,44,45,46,47,48,49,50,51];
+        // Auto-detected from CSV headers
+        let projectBlocks = []; // [{name, totalColIdx, detailCols:[...]}]
+        let coreBlock = null;  // {name, totalColIdx, detailCols:[...]}
 
-        function setStep(id, state, text) {
-            const icon = document.getElementById('step-' + id + '-icon');
-            const label = document.getElementById('step-' + id + '-text');
-            icon.className = 'step-icon step-' + state;
-            icon.textContent = state === 'done' ? '✓' : state === 'error' ? '✗' : state === 'loading' ? '…' : icon.textContent;
-            if (text) label.textContent = text;
-        }
-
-        function setProgress(pct) {
-            document.getElementById('progress-bar').style.width = pct + '%';
-        }
-
-        const PROXIES = [
-            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-            url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-            url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-            url => `https://thingproxy.freeboard.io/fetch/${url}`
-        ];
+        // ── Live Google Sheets fetch ──
+        const SHEETS = {
+            income:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR25ymKG6u7X5JmeWalr0EFpYvH1QUx-Lj5fQDKrt6OvZTkwNiXYtaFKZAF6LpXNk6O4aYi7_OKK80I/pub?output=csv',
+            expense: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYyzbGwJz5DBtHzngToFnTfvXjgcTbQmfLz9mVIutD6X_6ufr4o3_WANJazbf0bnb-w2rmQdrwFnKm/pub?output=csv',
+            balance: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLzxcrDdPGukeMhELio93dNHKAigzHoBgetyD7_q6nMH-cuUln3Cba3kZGJiym3ITKA17ou9llpfqC/pub?output=csv'
+        };
 
         async function fetchCSV(url) {
-            let lastError;
-            for (const proxyFn of PROXIES) {
-                try {
-                    const controller = new AbortController();
-                    const timer = setTimeout(() => controller.abort(), 10000); // 10s timeout per proxy
-                    const res = await fetch(proxyFn(url), { signal: controller.signal });
-                    clearTimeout(timer);
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const text = await res.text();
-                    if (text && text.length > 10) return text; // valid response
-                    throw new Error('Empty response');
-                } catch (e) {
-                    lastError = e;
-                    // try next proxy
-                }
-            }
-            throw new Error('All proxies failed: ' + (lastError?.message || lastError));
+            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error('Failed to fetch: ' + url);
+            return await res.text();
         }
 
-        async function loadAllSheets() {
+        async function loadLiveData() {
+            const step = (id, msg, done) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = (done ? '✅' : '⏳') + ' ' + msg;
+            };
             try {
-                setStep('income', 'loading', 'Fetching Income Statement…');
-                setProgress(5);
-                const incomeCsv = await fetchCSV(SHEETS.income);
-                setStep('income', 'done', 'Income Statement loaded ✓');
-                setProgress(35);
+                step('step-income',  'Fetching Income Statement…',  false);
+                const incomeCsv  = await fetchCSV(SHEETS.income);
+                step('step-income',  'Income Statement loaded',      true);
 
-                setStep('expense', 'loading', 'Fetching Expense Report…');
+                step('step-expense', 'Fetching Expense Report…',     false);
                 const expenseCsv = await fetchCSV(SHEETS.expense);
-                setStep('expense', 'done', 'Expense Report loaded ✓');
-                setProgress(65);
+                step('step-expense', 'Expense Report loaded',         true);
 
-                setStep('balance', 'loading', 'Fetching Balance Sheet…');
+                step('step-balance', 'Fetching Balance Sheet…',      false);
                 const balanceCsv = await fetchCSV(SHEETS.balance);
-                setStep('balance', 'done', 'Balance Sheet loaded ✓');
-                setProgress(100);
+                step('step-balance', 'Balance Sheet loaded',          true);
 
-                setTimeout(() => {
-                    uploadView.style.display = 'none';
-                    dashboardView.style.display = 'block';
-                    processFiles(incomeCsv, expenseCsv, balanceCsv);
-                    initDashboard();
-                    const now = new Date();
-                    document.getElementById('header-date').textContent = 'Updated: ' + now.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + now.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
-                }, 500);
-
-            } catch (err) {
-                const steps = ['income', 'expense', 'balance'];
-                const failed = steps.find(s => document.getElementById('step-' + s + '-icon').classList.contains('step-loading')) || 'income';
-                setStep(failed, 'error', 'Failed to load data');
-                const errEl = document.getElementById('error-message');
-                errEl.style.display = 'block';
-                errEl.innerHTML = '<b>Could not load data.</b> ' + (err.message || String(err)) +
-                    '<br><br>Make sure you are connected to the internet and the Google Sheets are published: ' +
-                    '<b>File → Share → Publish to web → select sheet → CSV → Publish</b>.';
+                uploadView.style.display = 'none';
+                dashboardView.style.display = 'block';
+                processFiles(incomeCsv, expenseCsv, balanceCsv);
+                initDashboard();
+            } catch(err) {
+                showMessage('error-message',
+                    'Could not load live data. Please check your internet connection. (' + err.message + ')', true);
+                document.getElementById('loading-status').textContent = 'Connection failed.';
             }
         }
 
@@ -1237,7 +758,7 @@
             if (isNaN(num)) return 'N/A';
             return new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
         }
-
+        
         function formatAbsoluteCurrency(value) {
             if (value === null || value === undefined) return 'N/A';
             const num = Math.abs(parseValue(value));
@@ -1249,7 +770,7 @@
             if (isNaN(value)) return 'N/A';
             return `${value.toFixed(0)}%`;
         }
-
+        
         function formatAbsolutePercentage(value) {
             if (isNaN(value)) return 'N/A';
             return `${Math.abs(value).toFixed(0)}%`;
@@ -1280,7 +801,7 @@
             selector1.value = months.length > 0 ? months.length - 1 : '';
             selector2.value = months.length > 1 ? months.length - 2 : '';
         }
-
+        
         function findIncomeHeaderKey(dataObject, possibleNames) {
             if (!dataObject || !possibleNames || possibleNames.length === 0) return null;
             const headers = Object.keys(dataObject);
@@ -1296,100 +817,140 @@
             return null;
         }
 
+        // ─── AUTO-DETECTION ENGINE ───────────────────────────────────────────────
+        //
+        // Convention your CSV must follow (same as the existing one):
+        //   • Columns 1–9 : Overall actual expense categories
+        //   • Column  10  : Total Expense (actual)
+        //   • Columns 11+ : One block per project/section.  Each block ends with
+        //                   a column whose header contains the word "Total".
+        //   • Budget block: headers contain "Budget" — these are skipped as projects.
+        //   • Core block  : header contains "Core" AND "Total".
+        //   • Everything else that ends with "Total" = a project block.
+        //
+        // Adding a new project just means appending its detail columns + a "Total"
+        // column to the right of all existing project blocks in your expense CSV.
+        // ─────────────────────────────────────────────────────────────────────────
 
-        // ─────────────────────────────────────────────────────────
-        //  AUTO-DETECT expense CSV structure from headers
-        // ─────────────────────────────────────────────────────────
-        function autoDetectStructure() {
-            // Detects project/core blocks using the pattern: "Total Expenses [ProjectName]"
-            // e.g. "Total Expenses Sahiwal Project", "Total Expenses Core", "Total Expenses ABC"
-            detectedProjects = [];
-            detectedCore = null;
+        function detectProjectAndCoreBlocks() {
+            projectBlocks = [];
+            coreBlock = null;
 
-            for (let i = 0; i < expenseHeaders.length; i++) {
-                const h = (expenseHeaders[i] || '').trim().replace(/^"+|"+$/g, ''); // strip quotes
-                if (!h) continue;
+            // We only look past the fixed columns (0–10 = period + 9 actuals + grand total)
+            const FIXED_END = 10;
 
-                // Pattern: "Total Expenses [Name]" or "Total Expense [Name]"
-                const m = h.match(/^Total\s+Expenses?\s+(.+)$/i);
-                if (!m) continue;
+            let prevEnd = FIXED_END; // index of the last "total" column we processed
 
-                const projName = m[1].trim();
+            expenseHeaders.forEach((h, i) => {
+                if (i <= FIXED_END) return;
+                if (typeof h !== 'string' || h.trim() === '') return;
 
-                // Collect preceding line-item indices (walk back, stop at a Total/empty/Period col)
-                const lineItems = [];
-                for (let j = i - 1; j >= 0 && lineItems.length < 9; j--) {
-                    const ph = (expenseHeaders[j] || '').trim();
-                    if (!ph || /\btotal\b/i.test(ph) || /^(period|month|year)$/i.test(ph)) break;
-                    lineItems.unshift(j);
+                const header = h.trim();
+                if (!/total/i.test(header)) return; // not a total column, skip
+
+                // Collect detail columns = everything between prevEnd+1 and i-1
+                const detailCols = [];
+                for (let d = prevEnd + 1; d < i; d++) {
+                    if (expenseHeaders[d] && expenseHeaders[d].trim() !== '') {
+                        detailCols.push(d);
+                    }
                 }
 
-                if (/\bcore\b/i.test(projName)) {
-                    detectedCore = { name: projName, totalIdx: i, lineItemIndices: lineItems };
+                const isbudget = /budget/i.test(header);
+                const isCore   = /core/i.test(header);
+
+                if (isbudget) {
+                    // Budget totals are used by budget variance section — skip as project
+                    prevEnd = i;
+                    return;
+                }
+
+                // Derive a human-readable project name from the header
+                let name = header
+                    .replace(/total/gi, '')
+                    .replace(/[-_]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                if (!name) name = header;
+
+                const block = { name, totalColIdx: i, detailCols };
+
+                if (isCore) {
+                    coreBlock = block;
                 } else {
-                    const sectionId = 'proj-' + projName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                    detectedProjects.push({ name: projName, displayName: projName, totalIdx: i, lineItemIndices: lineItems, sectionId });
+                    projectBlocks.push(block);
                 }
-            }
 
-            console.log('[IFR] Detected projects:', detectedProjects.map(p => p.name + '@' + p.totalIdx));
-            if (detectedCore) console.log('[IFR] Core:', detectedCore.name + '@' + detectedCore.totalIdx);
+                prevEnd = i;
+            });
+
+            console.log('Detected project blocks:', projectBlocks.map(b => b.name));
+            console.log('Core block:', coreBlock ? coreBlock.name : 'none');
         }
 
-                // Maps detected project names to their existing static HTML section/table IDs
-        function resolveSectionId(proj) {
-            const k = proj.name.toLowerCase();
-            if (k.includes('sahiwal'))                    return 'sahiwal-breakdown-section';
-            if (k.includes('uil'))                        return 'uil-breakdown-section';
-            if (k.includes('orangi'))                     return 'orangi-breakdown-section';
-            if (k.includes('nca'))                        return 'nca-breakdown-section';
-            if (k.includes('bat') && k.includes('eap'))   return 'bat-eap-breakdown-section';
-            if (k.includes('un')  && k.includes('women')) return 'un-women-breakdown-section';
-            if (k.includes('sdpi') || k.includes('new1')) return 'new1-breakdown-section';
-            // New / unknown projects → use generated sectionId
-            return proj.sectionId + '-breakdown-section';
-        }
-        function resolveTableId(proj) {
-            const secId = resolveSectionId(proj);
-            const tableMap = {
-                'sahiwal-breakdown-section':  'sahiwal-breakdown-table',
-                'uil-breakdown-section':      'uil-breakdown-table',
-                'orangi-breakdown-section':   'orangi-breakdown-table',
-                'nca-breakdown-section':      'nca-breakdown-table',
-                'bat-eap-breakdown-section':  'bat-eap-breakdown-table',
-                'un-women-breakdown-section': 'un-women-breakdown-table',
-                'new1-breakdown-section':     'new1-breakdown-table',
-            };
-            return tableMap[secId] || (proj.sectionId + '-table');
+        function makeProjectSectionId(block) {
+            return 'proj-section-' + block.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
         }
 
-        function buildProjectSections() {
-            const container = document.getElementById('dashboard-view');
-            const anchor    = document.getElementById('comparison-section');
-            detectedProjects.forEach(proj => {
-                const finalId = resolveSectionId(proj);
-                if (document.getElementById(finalId)) return;
-                const sec = document.createElement('section');
-                sec.id = finalId;
-                sec.className = 'section project-detail-section';
-                sec.style.display = 'none';
-                sec.innerHTML = `
+        function makeProjectTableId(block) {
+            return 'proj-table-' + block.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        }
+
+        function createProjectSections() {
+            const container = document.getElementById('dynamic-project-sections');
+            container.innerHTML = '';
+            projectBlocks.forEach(block => {
+                const sectionId = makeProjectSectionId(block);
+                const tableId   = makeProjectTableId(block);
+                const section = document.createElement('section');
+                section.id = sectionId;
+                section.className = 'section dynamic-project-section';
+                section.style.display = 'none';
+                section.innerHTML = `
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-                        <h2 class="section-title" style="margin-bottom:0;">${proj.displayName} Breakdown</h2>
-                        <button class="back-btn dyn-back-btn">Back to Project Breakdown</button>
+                        <h2 class="section-title" style="margin-bottom:0;">${block.name} Breakdown</h2>
+                        <button class="back-btn back-to-project-list-btn">Back to Project Breakdown</button>
                     </div>
-                    <table id="${proj.sectionId}-table">
+                    <table id="${tableId}">
                         <thead><tr><th>Expense Category</th><th>Amount</th><th>% of Total</th></tr></thead>
                         <tbody></tbody>
                     </table>`;
-                sec.querySelector('.dyn-back-btn').addEventListener('click', showProjectBreakdown);
-                container.insertBefore(sec, anchor);
+                // Wire up the back button
+                section.querySelector('.back-to-project-list-btn').addEventListener('click', showProjectBreakdown);
+                container.appendChild(section);
             });
         }
 
-        function hideAllProjectDetailSections() {
-            document.querySelectorAll('.project-detail-section').forEach(el => el.style.display = 'none');
+        // Hide every breakdown panel (project list, individual projects, core, financial, etc.)
+        function hideAllBreakdownSections() {
+            const staticIds = [
+                'income-overview','expense-overview','project-breakdown-section',
+                'core-breakdown-section','financial-breakdown-section',
+                'investment-breakdown-section','provident-fund-breakdown-section',
+                'budget-variance-section','yearly-budget-variance-section',
+                'budget-time-utilization-section'
+            ];
+            staticIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            // Dynamic project sections
+            document.querySelectorAll('.dynamic-project-section').forEach(el => {
+                el.style.display = 'none';
+            });
         }
+
+        function showMainDashboard() {
+            hideAllBreakdownSections();
+            document.getElementById('executive-summary').style.display = 'block';
+            document.getElementById('key-metrics').style.display = 'grid';
+            document.getElementById('narrative-analysis').style.display = 'block';
+            document.getElementById('comparison-section').style.display = 'block';
+            document.getElementById('budget-variance-section').style.display = 'block';
+            document.getElementById('yearly-budget-variance-section').style.display = 'block';
+            document.getElementById('budget-time-utilization-section').style.display = 'block';
+        }
+        // ─── END AUTO-DETECTION ENGINE ────────────────────────────────────────────
 
         function processFiles(incomeCsv, expenseCsv, balanceSheetCsv) {
             hideMessage('error-message');
@@ -1411,27 +972,29 @@
                                     expenseData = expenseResults.data;
                                     balanceSheetHeaders = Object.keys(balanceSheetResults.data[0]);
                                     balanceSheetData = balanceSheetResults.data;
-
+                                    
                                     Papa.parse(expenseCsv, {
                                         header: false,
                                         skipEmptyLines: true,
                                         complete: function(expResults) {
                                             expenseHeaders = expResults.data[0];
                                             expenseData = expResults.data.slice(1);
-                                            autoDetectStructure();
-                                            buildProjectSections();
-
+                                            
+                                            // AUTO-DETECT project blocks from headers
+                                            detectProjectAndCoreBlocks();
+                                            createProjectSections();
+                                            
                                             Papa.parse(balanceSheetCsv, {
                                                 header: false,
                                                 skipEmptyLines: true,
                                                 complete: function(bsResults) {
                                                     balanceSheetHeaders = bsResults.data[0];
                                                     balanceSheetData = bsResults.data.slice(1);
-
+                                                    
                                                     if (incomeData.length > 0) {
                                                         incomeHeaderKey = findIncomeHeaderKey(incomeData[0], ['Total Income', 'Income Total']);
                                                     }
-
+                                                    
                                                     if (incomeData.length > 0 && expenseData.length > 0 && balanceSheetData.length > 0 && incomeHeaderKey) {
                                                         months = incomeData.map(d => d.Period);
                                                         populateMonthSelectors();
@@ -1452,7 +1015,7 @@
                 }
             });
         }
-
+        
         function updateDashboard() {
             try {
                 const selectedIndex1 = document.getElementById('month-selector-1').value;
@@ -1480,9 +1043,14 @@
             const incomeTotal = parseValue(incomeEntry ? incomeEntry[incomeHeaderKey] : null);
 
             const expenseEntry = expenseData[selectedIndex];
-            const totalProjectExpense = detectedProjects.reduce((sum, p) => sum + parseValue(expenseEntry[p.totalIdx]), 0);
-            const coreExpenses = detectedCore ? parseValue(expenseEntry[detectedCore.totalIdx]) : 0;
-            const totalExpense = parseValue(expenseEntry ? expenseEntry[detectedTotalExpenseIdx] : null);
+            const totalExpense = parseValue(expenseEntry ? expenseEntry[10] : null);
+
+            // Dynamic: sum all detected project totals
+            const totalProjectExpense = projectBlocks.reduce((sum, b) => {
+                return sum + parseValue(expenseEntry[b.totalColIdx]);
+            }, 0);
+
+            const coreExpenses = coreBlock ? parseValue(expenseEntry[coreBlock.totalColIdx]) : 0;
 
             const balanceSheetEntry = balanceSheetData[selectedIndex];
             const totalAssets = parseValue(balanceSheetEntry ? balanceSheetEntry[17] : null);
@@ -1496,12 +1064,8 @@
             document.getElementById('total-expense-metric').textContent = formatCurrency(totalExpense);
             document.getElementById('total-project-expense-metric').textContent = formatCurrency(totalProjectExpense);
             document.getElementById('core-expense-metric').textContent = formatCurrency(coreExpenses);
-            const npEl = document.getElementById('net-profit-metric');
-            npEl.textContent = formatCurrency(netProfit);
-            npEl.className = 'metric-value ' + (netProfit >= 0 ? 'profit' : 'loss');
-            const pmEl = document.getElementById('profit-margin-metric');
-            pmEl.textContent = formatPercentage(profitMargin);
-            pmEl.className = 'metric-value ' + (profitMargin >= 0 ? 'profit' : 'loss');
+            document.getElementById('net-profit-metric').textContent = formatCurrency(netProfit);
+            document.getElementById('profit-margin-metric').textContent = formatPercentage(profitMargin);
             document.getElementById('total-assets-metric').textContent = formatCurrency(totalAssets);
             document.getElementById('total-liabilities-metric').textContent = formatCurrency(totalLiabilities);
             document.getElementById('total-equity-metric').textContent = formatCurrency(totalEquity);
@@ -1518,16 +1082,16 @@
 
             const balanceSheetEntry1 = balanceSheetData[index1] || {};
             const balanceSheetEntry2 = balanceSheetData[index2] || {};
-
+            
             document.getElementById('comparison-header-1').textContent = getMonthName(incomeEntry1.Period);
             document.getElementById('comparison-header-2').textContent = getMonthName(incomeEntry2.Period);
 
             const income1 = parseValue(incomeEntry1[incomeHeaderKey]);
-            const totalExpense1 = parseValue(expenseEntry1[detectedTotalExpenseIdx]);
+            const totalExpense1 = parseValue(expenseEntry1[10]);
             const assets1 = parseValue(balanceSheetEntry1[17]);
             const liabilities1 = parseValue(balanceSheetEntry1[27]);
             const income2 = parseValue(incomeEntry2[incomeHeaderKey]);
-            const totalExpense2 = parseValue(expenseEntry2[detectedTotalExpenseIdx]);
+            const totalExpense2 = parseValue(expenseEntry2[10]);
             const assets2 = parseValue(balanceSheetEntry2[17]);
             const liabilities2 = parseValue(balanceSheetEntry2[27]);
 
@@ -1547,7 +1111,7 @@
             metrics.forEach(metric => {
                 const change = metric.value1 - metric.value2;
                 const percentChange = (change / (metric.value2 || 1)) * 100;
-
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${metric.label}</td>
@@ -1590,9 +1154,9 @@
             const tableBody = document.querySelector('#expense-table tbody');
             tableBody.innerHTML = '';
             const data = expenseData[selectedIndex];
-            const total = parseValue(data[detectedTotalExpenseIdx]);
-
-            const expenseBreakdownColumns = detectedActualCols;
+            const total = parseValue(data[10]);
+            
+            const expenseBreakdownColumns = [1,2,3,4,5,6,7,8,9];
 
             expenseBreakdownColumns.forEach(index => {
                 const header = expenseHeaders[index];
@@ -1611,16 +1175,14 @@
         function populateCoreExpenseTable(selectedIndex) {
             const tableBody = document.querySelector('#core-breakdown-table tbody');
             tableBody.innerHTML = '';
+            if (!coreBlock) return;
             const data = expenseData[selectedIndex];
+            const coreTotal = parseValue(data[coreBlock.totalColIdx]);
 
-            const coreExpenseColumns = detectedCore ? detectedCore.lineItemIndices : [63,64,65,66,67,68,69,70,71];
-            const coreTotal = detectedCore ? parseValue(data[detectedCore.totalIdx]) : parseValue(data[72]);
-
-            coreExpenseColumns.forEach(index => {
+            coreBlock.detailCols.forEach(index => {
                 const header = expenseHeaders[index];
                 const value = parseValue(data[index]);
                 const percentage = (value / (coreTotal || 1)) * 100;
-
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${header}</td>
@@ -1636,8 +1198,10 @@
             const incomeTotal = parseValue(incomeEntry ? incomeEntry[incomeHeaderKey] : null);
 
             const expenseEntry = expenseData[selectedIndex];
-            const totalProjectExpense = detectedProjects.reduce((sum, p) => sum + parseValue(expenseEntry[p.totalIdx]), 0);
-            const totalExpense = parseValue(expenseEntry ? expenseEntry[detectedTotalExpenseIdx] : null);
+            const totalProjectExpense = projectBlocks.reduce((sum, b) => {
+                return sum + parseValue(expenseEntry[b.totalColIdx]);
+            }, 0);
+            const totalExpense = parseValue(expenseEntry ? expenseEntry[10] : null);
             const netProfit = incomeTotal - totalExpense;
             const profitMargin = ((netProfit / (incomeTotal || 1)) * 100).toFixed(0);
 
@@ -1652,7 +1216,7 @@
             } else {
                 summaryText = `In ${incomeEntry.Period}, the company achieved a total income of ${formatCurrency(incomeTotal)}, with total expenses amounting to ${formatCurrency(totalExpense)}, which includes project expenses of ${formatCurrency(totalProjectExpense)}. This resulted in a net loss of ${formatCurrency(Math.abs(netProfit))}, reflecting a loss margin of ${Math.abs(profitMargin)}%. On the balance sheet, the company reports total assets of ${formatCurrency(totalAssets)}, total liabilities of ${formatCurrency(totalLiabilities)}, and an equity of ${formatCurrency(totalEquity)}.`;
             }
-
+            
             document.getElementById('executive-summary-text').textContent = summaryText;
         }
 
@@ -1662,8 +1226,8 @@
             const incomeEntry2 = incomeData[selectedIndex2];
             const expenseEntry2 = expenseData[selectedIndex2];
 
-            const netProfit1 = parseValue(incomeEntry1[incomeHeaderKey]) - parseValue(expenseEntry1[detectedTotalExpenseIdx]);
-            const netProfit2 = parseValue(incomeEntry2[incomeHeaderKey]) - parseValue(expenseEntry2[detectedTotalExpenseIdx]);
+            const netProfit1 = parseValue(incomeEntry1[incomeHeaderKey]) - parseValue(expenseEntry1[10]);
+            const netProfit2 = parseValue(incomeEntry2[incomeHeaderKey]) - parseValue(expenseEntry2[10]);
             const profitChange = netProfit1 - netProfit2;
             const profitPercentChange = ((profitChange / (netProfit2 || 1)) * 100).toFixed(0);
 
@@ -1700,27 +1264,12 @@
                 tableBody.appendChild(row);
             });
 
+            hideAllBreakdownSections();
             document.getElementById('executive-summary').style.display = 'none';
             document.getElementById('key-metrics').style.display = 'none';
             document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-            document.getElementById('un-women-breakdown-section').style.display = 'none';
-            document.getElementById('new1-breakdown-section').style.display = 'none';
-            document.getElementById('core-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
             document.getElementById('investment-breakdown-section').style.display = 'block';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none';
-            document.getElementById('budget-time-utilization-section').style.display = 'none';
             document.getElementById('investment-breakdown-section').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -1767,28 +1316,14 @@
             const selectedIndex = document.getElementById('month-selector-1').value;
             const period = incomeData[selectedIndex].Period;
             document.getElementById('income-overview-title').textContent = `Income Breakdown for ${period}`;
-            document.getElementById('income-overview').style.display = 'block';
             document.getElementById('back-to-income-btn').style.display = 'inline-block';
-            document.getElementById('key-metrics').style.display = 'none';
+
+            hideAllBreakdownSections();
             document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
             document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-            document.getElementById('un-women-breakdown-section').style.display = 'none';
-            document.getElementById('new1-breakdown-section').style.display = 'none';
-            document.getElementById('core-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none';
-            document.getElementById('budget-time-utilization-section').style.display = 'none';
+            document.getElementById('income-overview').style.display = 'block';
             populateIncomeTable(selectedIndex);
             document.getElementById('income-overview').scrollIntoView({ behavior: 'smooth' });
         }
@@ -1797,210 +1332,127 @@
             document.getElementById('income-overview').style.display = 'none';
             document.getElementById('back-to-income-btn').style.display = 'none';
             document.getElementById('income-overview-title').textContent = 'Income Overview';
-            document.getElementById('key-metrics').style.display = 'grid';
-            document.getElementById('executive-summary').style.display = 'block';
-            document.getElementById('narrative-analysis').style.display = 'block';
-            document.getElementById('expense-overview').style.display = 'none';
-            document.getElementById('comparison-section').style.display = 'block';
-            document.getElementById('budget-variance-section').style.display = 'block';
-            document.getElementById('yearly-budget-variance-section').style.display = 'block';
-            document.getElementById('budget-time-utilization-section').style.display = 'block';
+            showMainDashboard();
         }
 
         function showExpenseBreakdown() {
             const selectedIndex = document.getElementById('month-selector-1').value;
             const period = incomeData[selectedIndex].Period;
-
             document.getElementById('expense-overview-title').textContent = `Total Expense Breakdown for ${period}`;
             document.getElementById('back-to-expense-btn').textContent = 'Back to Total Expense';
             document.getElementById('back-to-expense-btn').style.display = 'inline-block';
 
-            document.getElementById('key-metrics').style.display = 'none';
+            hideAllBreakdownSections();
             document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
             document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('income-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-            document.getElementById('un-women-breakdown-section').style.display = 'none';
-            document.getElementById('new1-breakdown-section').style.display = 'none';
-            document.getElementById('core-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none'; 
-            document.getElementById('budget-time-utilization-section').style.display = 'none'; 
-
             document.getElementById('expense-overview').style.display = 'block';
-
             populateExpenseTable(selectedIndex);
             document.getElementById('expense-overview').scrollIntoView({ behavior: 'smooth' });
         }
-
+        
         function showCoreExpenseBreakdown() {
             const selectedIndex = document.getElementById('month-selector-1').value;
             const period = incomeData[selectedIndex].Period;
-
             document.getElementById('core-breakdown-title').textContent = `Core Expense Breakdown for ${period}`;
 
-            document.getElementById('key-metrics').style.display = 'none';
+            hideAllBreakdownSections();
             document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
             document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none'; 
-            document.getElementById('budget-time-utilization-section').style.display = 'none'; 
-
             document.getElementById('core-breakdown-section').style.display = 'block';
-
             populateCoreExpenseTable(selectedIndex);
             document.getElementById('core-breakdown-section').scrollIntoView({ behavior: 'smooth' });
         }
 
         function hideCoreExpenseBreakdown() {
-            document.getElementById('core-breakdown-section').style.display = 'none';
-            document.getElementById('key-metrics').style.display = 'grid';
-            document.getElementById('executive-summary').style.display = 'block';
-            document.getElementById('narrative-analysis').style.display = 'block';
-            document.getElementById('comparison-section').style.display = 'block';
-            document.getElementById('budget-variance-section').style.display = 'block';
-            document.getElementById('yearly-budget-variance-section').style.display = 'block';
-            document.getElementById('budget-time-utilization-section').style.display = 'block';
+            showMainDashboard();
         }
 
         function hideExpenseBreakdown() {
-            document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('back-to-expense-btn').style.display = 'none';
             document.getElementById('expense-overview-title').textContent = 'Expense Overview';
-            document.getElementById('key-metrics').style.display = 'grid';
-            document.getElementById('executive-summary').style.display = 'block';
-            document.getElementById('narrative-analysis').style.display = 'block';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('comparison-section').style.display = 'block';
-            document.getElementById('budget-variance-section').style.display = 'block';
-            document.getElementById('yearly-budget-variance-section').style.display = 'block';
-            document.getElementById('budget-time-utilization-section').style.display = 'block';
+            showMainDashboard();
         }
 
         function showProjectBreakdown() {
             const selectedIndex = document.getElementById('month-selector-1').value;
             const expenseEntry = expenseData[selectedIndex];
 
-            const totalProjectExpense = detectedProjects.reduce((sum, p) => sum + parseValue(expenseEntry[p.totalIdx]), 0);
-
             const tableBody = document.querySelector('#project-breakdown-table tbody');
             tableBody.innerHTML = '';
 
-            detectedProjects.forEach(proj => {
-                const amount = parseValue(expenseEntry[proj.totalIdx]);
-                if (amount === 0) return;
+            const totalProjectExpense = projectBlocks.reduce((sum, b) => {
+                return sum + parseValue(expenseEntry[b.totalColIdx]);
+            }, 0);
+
+            projectBlocks.forEach(block => {
+                const amount = parseValue(expenseEntry[block.totalColIdx]);
+                if (amount <= 0) return; // skip zero-spend projects
                 const percentage = (amount / (totalProjectExpense || 1)) * 100;
                 const row = document.createElement('tr');
                 row.className = 'clickable-row';
-                row.dataset.project = proj.displayName;
-                row.innerHTML = `<td>${proj.displayName}</td><td>${formatCurrency(amount)}</td><td>${formatPercentage(percentage)}</td>`;
+                row.dataset.projectName = block.name;
+                row.innerHTML = `
+                    <td>${block.name}</td>
+                    <td>${formatCurrency(amount)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
                 tableBody.appendChild(row);
             });
 
+            hideAllBreakdownSections();
             document.getElementById('executive-summary').style.display = 'none';
             document.getElementById('key-metrics').style.display = 'none';
             document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('core-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none';
-            document.getElementById('budget-time-utilization-section').style.display = 'none';
-            hideAllProjectDetailSections();
             document.getElementById('project-breakdown-section').style.display = 'block';
             document.getElementById('project-breakdown-section').scrollIntoView({ behavior: 'smooth' });
         }
 
         function hideProjectBreakdown() {
-            document.getElementById('executive-summary').style.display = 'block';
-            document.getElementById('key-metrics').style.display = 'grid';
-            document.getElementById('narrative-analysis').style.display = 'block';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
-            document.getElementById('comparison-section').style.display = 'block';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-            document.getElementById('un-women-breakdown-section').style.display = 'none';
-            document.getElementById('new1-breakdown-section').style.display = 'none';
-            document.getElementById('core-breakdown-section').style.display = 'none';
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'block';
-            document.getElementById('yearly-budget-variance-section').style.display = 'block';
-            document.getElementById('budget-time-utilization-section').style.display = 'block';
+            showMainDashboard();
         }
-
+        
         function showSpecificProjectBreakdown(projectName) {
             const selectedIndex = document.getElementById('month-selector-1').value;
             const expenseEntry = expenseData[selectedIndex];
 
-            // Find the detected project by displayName
-            const proj = detectedProjects.find(p => p.displayName === projectName || p.displayName + ' Project' === projectName);
-            if (!proj) { console.warn('[IFR] Project not found:', projectName); return; }
+            // Find the matching detected block
+            const block = projectBlocks.find(b => b.name === projectName);
+            if (!block) return;
 
-            const total = parseValue(expenseEntry[proj.totalIdx]);
-            const secId  = resolveSectionId(proj);
-            const tblId  = resolveTableId(proj);
+            const total = parseValue(expenseEntry[block.totalColIdx]);
+            const sectionId = makeProjectSectionId(block);
+            const tableId   = makeProjectTableId(block);
 
-            // Hide all project detail sections then show the right one
-            hideAllProjectDetailSections();
-            document.getElementById('project-breakdown-section').style.display = 'none';
-
-            const section = document.getElementById(secId);
-            if (!section) { console.warn('[IFR] Section not found:', secId); return; }
-            section.style.display = 'block';
-
-            const tableBody = document.querySelector('#' + tblId + ' tbody');
-            if (!tableBody) { console.warn('[IFR] Table not found:', tblId); return; }
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            if (!tableBody) return;
             tableBody.innerHTML = '';
 
-            proj.lineItemIndices.forEach(idx => {
-                const header = expenseHeaders[idx];
-                const value  = parseValue(expenseEntry[idx]);
-                const pct    = (value / (total || 1)) * 100;
+            block.detailCols.forEach(colIdx => {
+                const header = expenseHeaders[colIdx];
+                const value = parseValue(expenseEntry[colIdx]);
+                const percentage = (value / (total || 1)) * 100;
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${header}</td><td>${formatCurrency(value)}</td><td>${formatPercentage(pct)}</td>`;
+                row.innerHTML = `
+                    <td>${header}</td>
+                    <td>${formatCurrency(value)}</td>
+                    <td>${formatPercentage(percentage)}</td>
+                `;
                 tableBody.appendChild(row);
             });
 
-            section.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function hideSpecificProjectBreakdown() {
-             document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-             document.getElementById('uil-breakdown-section').style.display = 'none';
-             document.getElementById('orangi-breakdown-section').style.display = 'none';
-             document.getElementById('nca-breakdown-section').style.display = 'none';
-             showProjectBreakdown();
+            hideAllBreakdownSections();
+            document.getElementById('executive-summary').style.display = 'none';
+            document.getElementById('key-metrics').style.display = 'none';
+            document.getElementById('narrative-analysis').style.display = 'none';
+            document.getElementById('comparison-section').style.display = 'none';
+            document.getElementById('project-breakdown-section').style.display = 'none';
+            document.getElementById(sectionId).style.display = 'block';
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
         }
 
         function showFinancialBreakdown(type) {
@@ -2045,82 +1497,29 @@
                 tableBody.appendChild(row);
             });
 
+            hideAllBreakdownSections();
             document.getElementById('executive-summary').style.display = 'none';
             document.getElementById('key-metrics').style.display = 'none';
             document.getElementById('narrative-analysis').style.display = 'none';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
             document.getElementById('comparison-section').style.display = 'none';
-            document.getElementById('project-breakdown-section').style.display = 'none';
-            document.getElementById('sahiwal-breakdown-section').style.display = 'none';
-            document.getElementById('uil-breakdown-section').style.display = 'none';
-            document.getElementById('orangi-breakdown-section').style.display = 'none';
-            document.getElementById('nca-breakdown-section').style.display = 'none';
-            document.getElementById('bat-eap-breakdown-section').style.display = 'none';
-            document.getElementById('un-women-breakdown-section').style.display = 'none';
-            document.getElementById('new1-breakdown-section').style.display = 'none';
-            document.getElementById('core-breakdown-section').style.display = 'none';
             document.getElementById('financial-breakdown-section').style.display = 'block';
-            document.getElementById('investment-breakdown-section').style.display = 'none';
-            document.getElementById('provident-fund-breakdown-section').style.display = 'none';
-            document.getElementById('budget-variance-section').style.display = 'none';
-            document.getElementById('yearly-budget-variance-section').style.display = 'none';
-            document.getElementById('budget-time-utilization-section').style.display = 'none';
             document.getElementById('financial-breakdown-section').scrollIntoView({ behavior: 'smooth' });
         }
 
         function hideFinancialBreakdown() {
-            document.getElementById('financial-breakdown-section').style.display = 'none';
-            document.getElementById('executive-summary').style.display = 'block';
-            document.getElementById('key-metrics').style.display = 'grid';
-            document.getElementById('narrative-analysis').style.display = 'block';
-            document.getElementById('income-overview').style.display = 'none';
-            document.getElementById('expense-overview').style.display = 'none';
-            document.getElementById('comparison-section').style.display = 'block';
-            document.getElementById('budget-variance-section').style.display = 'block';
-            document.getElementById('yearly-budget-variance-section').style.display = 'block';
-            document.getElementById('budget-time-utilization-section').style.display = 'block';
+            showMainDashboard();
             document.getElementById('key-metrics').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Derive fiscal year start/end indices dynamically from the selected month.
-        // Fiscal year: July → June. E.g. Apr-26 → FY Jul-25 to Jun-26.
-        function getFiscalYearBounds(selectedIndex) {
-            const period = months[selectedIndex]; // e.g. "Apr-26"
-            const parts  = period.split('-');
-            const mon    = parts[0];  // e.g. "Apr"
-            const yr2    = parseInt(parts[1], 10); // e.g. 26
-
-            // If July–December: FY starts this July (yr2), ends next June (yr2+1)
-            // If January–June : FY started previous July (yr2-1), ends this June (yr2)
-            const julMonths = ['Jul','Aug','Sep','Oct','Nov','Dec'];
-            let fyStartYear, fyEndYear;
-            if (julMonths.includes(mon)) {
-                fyStartYear = yr2;
-                fyEndYear   = yr2 + 1;
-            } else {
-                fyStartYear = yr2 - 1;
-                fyEndYear   = yr2;
-            }
-
-            const fyStartPeriod = 'Jul-' + String(fyStartYear).padStart(2,'0');
-            const fyEndPeriod   = 'Jun-' + String(fyEndYear).padStart(2,'0');
-
-            let fyStartIndex = months.indexOf(fyStartPeriod);
-            let fyEndIndex   = months.indexOf(fyEndPeriod);
-
-            if (fyStartIndex === -1) fyStartIndex = 0;
-            if (fyEndIndex   === -1) fyEndIndex   = expenseData.length - 1;
-
-            return { fyStartIndex, fyEndIndex, fyStartPeriod, fyEndPeriod };
         }
 
         function populateBudgetVarianceTable(selectedIndex) {
             const tableBody = document.querySelector('#budget-variance-table tbody');
             tableBody.innerHTML = '';
+            
             const data = expenseData[selectedIndex];
-            const actualColumns = detectedActualCols;
-            const budgetColumns = detectedBudgetCols;
+
+            const actualColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const budgetColumns = [43, 44, 45, 46, 47, 48, 49, 50, 51];
+
             const expenseCategories = actualColumns.map(index => expenseHeaders[index]);
 
             expenseCategories.forEach((category, i) => {
@@ -2128,7 +1527,9 @@
                 const budget = parseValue(data[budgetColumns[i]]);
                 const variance = actual - budget;
                 const budgetUtilizedPercent = (actual / (budget || 1)) * 100;
+
                 const row = document.createElement('tr');
+                
                 row.innerHTML = `
                     <td>${category}</td>
                     <td>${formatCurrency(budget)}</td>
@@ -2138,11 +1539,12 @@
                 `;
                 tableBody.appendChild(row);
             });
-
-            const totalActual = parseValue(data[detectedTotalExpenseIdx]);
-            const totalBudget = parseValue(data[detectedTotalBudgetIdx]);
+            
+            const totalActual = parseValue(data[10]);
+            const totalBudget = parseValue(data[52]); 
             const totalVariance = totalActual - totalBudget;
             const totalBudgetUtilizedPercent = (totalActual / (totalBudget || 1)) * 100;
+
             const totalRow = document.createElement('tr');
             totalRow.innerHTML = `
                 <td><b>Total</b></td>
@@ -2157,33 +1559,49 @@
         function populateYearlyBudgetVarianceTable(selectedIndex) {
             const tableBody = document.querySelector('#yearly-budget-variance-table tbody');
             tableBody.innerHTML = '';
+            
+            const fiscalYearStartPeriod = 'Jul-26';
+            let fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
 
-            const { fyStartIndex, fyEndIndex } = getFiscalYearBounds(Number(selectedIndex));
-            const budgetLoopLimit = Math.min(expenseData.length - 1, fyEndIndex);
+            if (fiscalYearStartIndex === -1) {
+                console.warn(`Fiscal Year start period ${fiscalYearStartPeriod} not found. Starting YTD Actuals from index 0.`);
+                fiscalYearStartIndex = 0;
+            }
+            
+            const fiscalYearEndPeriod = 'Jun-27';
+            let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
+            if (fiscalYearEndIndex === -1) {
+                fiscalYearEndIndex = expenseData.length - 1;
+            }
+            const budgetLoopLimit = Math.min(expenseData.length - 1, fiscalYearEndIndex);
+            
+            const actualColumns = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const budgetColumns = [43, 44, 45, 46, 47, 48, 49, 50, 51];
+            const totalActualIndex = 10;
+            const totalBudgetIndex = 52; 
 
-            const actualColumns = detectedActualCols;
-            const budgetColumns = detectedBudgetCols;
-            const totalActualIndex = detectedTotalExpenseIdx;
-            const totalBudgetIndex = detectedTotalBudgetIdx;
-
-            const ytdActuals      = new Array(actualColumns.length).fill(0);
-            const fullYearBudgets = new Array(budgetColumns.length).fill(0);
-            let ytdTotalActual    = 0;
+            const ytdActuals = new Array(actualColumns.length).fill(0);
+            const fullYearBudgets = new Array(budgetColumns.length).fill(0); 
+            let ytdTotalActual = 0;
             let fullYearTotalBudget = 0;
 
-            for (let i = fyStartIndex; i <= Number(selectedIndex); i++) {
+            for (let i = fiscalYearStartIndex; i <= selectedIndex; i++) {
                 const monthData = expenseData[i];
+                
                 actualColumns.forEach((colIndex, j) => {
                     ytdActuals[j] += parseValue(monthData[colIndex]);
                 });
+
                 ytdTotalActual += parseValue(monthData[totalActualIndex]);
             }
-
-            for (let i = fyStartIndex; i <= budgetLoopLimit; i++) {
+            
+            for (let i = fiscalYearStartIndex; i <= budgetLoopLimit; i++) {
                 const monthData = expenseData[i];
+
                 budgetColumns.forEach((colIndex, j) => {
-                    fullYearBudgets[j] += parseValue(monthData[colIndex]);
+                    fullYearBudgets[j] += parseValue(monthData[budgetColumns[j]]);
                 });
+
                 fullYearTotalBudget += parseValue(monthData[totalBudgetIndex]);
             }
 
@@ -2196,7 +1614,7 @@
                 const budgetUtilizedPercent = (actual / (budget || 1)) * 100;
 
                 const row = document.createElement('tr');
-
+                
                 row.innerHTML = `
                     <td>${category}</td>
                     <td>${formatCurrency(budget)}</td>
@@ -2206,7 +1624,7 @@
                 `;
                 tableBody.appendChild(row);
             });
-
+            
             const totalRow = document.createElement('tr');
             const totalVariance = ytdTotalActual - fullYearTotalBudget;
             const totalBudgetUtilizedPercent = (ytdTotalActual / (fullYearTotalBudget || 1)) * 100;
@@ -2222,22 +1640,38 @@
         }
 
         function populateBudgetTimeUtilization(selectedIndex) {
+            const fiscalYearStartPeriod = 'Jul-26';
             const totalFYMonths = 12;
-            const { fyStartIndex, fyEndIndex } = getFiscalYearBounds(Number(selectedIndex));
-            const budgetLoopLimit = Math.min(expenseData.length - 1, fyEndIndex);
+            const fiscalYearStartIndex = months.indexOf(fiscalYearStartPeriod);
 
-            const monthsElapsed   = Number(selectedIndex) - fyStartIndex + 1;
-            const timeUtilized    = (monthsElapsed / totalFYMonths) * 100;
+            if (fiscalYearStartIndex === -1 || Number(selectedIndex) < fiscalYearStartIndex) {
+                document.getElementById('budget-utilization-metric').textContent = formatPercentage(0);
+                document.getElementById('time-utilization-metric').textContent = formatPercentage(0);
+                document.getElementById('budget-utilization-card').style.backgroundColor = '#34495e';
+                document.getElementById('time-utilization-card').style.backgroundColor = '#34495e';
+                return;
+            }
 
-            const totalActualIndex = detectedTotalExpenseIdx;
-            const totalBudgetIndex = detectedTotalBudgetIdx;
-            let ytdTotalActual     = 0;
+            const monthsElapsed = Number(selectedIndex) - fiscalYearStartIndex + 1;
+            const timeUtilized = (monthsElapsed / totalFYMonths) * 100;
+
+            const totalActualIndex = 10;
+            const totalBudgetIndex = 52;
+            let ytdTotalActual = 0;
             let fullYearTotalBudget = 0;
-
-            for (let i = fyStartIndex; i <= Number(selectedIndex); i++) {
+            
+            for (let i = fiscalYearStartIndex; i <= Number(selectedIndex); i++) {
                 ytdTotalActual += parseValue(expenseData[i][totalActualIndex]);
             }
-            for (let i = fyStartIndex; i <= budgetLoopLimit; i++) {
+            
+            const fiscalYearEndPeriod = 'Jun-27';
+            let fiscalYearEndIndex = months.indexOf(fiscalYearEndPeriod);
+            
+            const budgetLoopLimit = (fiscalYearEndIndex !== -1 && fiscalYearEndIndex >= fiscalYearStartIndex) 
+                                    ? fiscalYearEndIndex 
+                                    : expenseData.length - 1;
+            
+            for (let i = fiscalYearStartIndex; i <= budgetLoopLimit; i++) {
                 fullYearTotalBudget += parseValue(expenseData[i][totalBudgetIndex]);
             }
 
@@ -2245,288 +1679,43 @@
 
             document.getElementById('budget-utilization-metric').textContent = formatPercentage(budgetUtilized);
             document.getElementById('time-utilization-metric').textContent = formatPercentage(timeUtilized);
-
-            // Budget card: green if on/under budget vs time elapsed, red if overspent
+            
             const budgetCard = document.getElementById('budget-utilization-card');
-            budgetCard.classList.remove('card-green', 'card-red');
-            budgetCard.classList.add(budgetUtilized <= timeUtilized + 5 ? 'card-green' : 'card-red');
-
-            // Time card: always green (time elapsed is always a valid positive metric)
             const timeCard = document.getElementById('time-utilization-card');
-            timeCard.classList.remove('card-green', 'card-red');
-            timeCard.classList.add('card-green');
-        }
 
+            timeCard.style.backgroundColor = '#27ae60';
 
-        // ─── KPI Modal with drill-down & breadcrumb ──────────────
-        let _modalStack = [];  // [{title, totalText, totalClass, period, rows}]
-
-        function _renderModal(frame) {
-            document.getElementById('kpi-modal-title').textContent = frame.title;
-            const tot = document.getElementById('kpi-modal-total');
-            tot.textContent = frame.totalText;
-            tot.className   = frame.totalClass || '';
-            document.getElementById('kpi-modal-period').textContent = frame.period || '';
-
-            const bc = document.getElementById('kpi-modal-breadcrumb');
-            bc.innerHTML = _modalStack.length <= 1 ? '' :
-                _modalStack.slice(0, -1).map((f, i) =>
-                    `<span class="bc-item" onclick="_drillBack(${i+1})">${f.title}</span><span class="bc-sep">›</span>`
-                ).join('') + `<span class="bc-current">${frame.title}</span>`;
-
-            const body = document.getElementById('kpi-modal-body');
-            const rows = (frame.rows || []).filter(r => r.rawVal !== 0 && r.rawVal !== undefined || r.label === 'Net Profit / Loss' || r.label === 'Equity (A – L)');
-            if (!rows.length) {
-                body.innerHTML = '<div class="modal-empty">No breakdown available for this item.</div>';
-                body.scrollTop = 0;
-                return;
+            if (budgetUtilized > timeUtilized + 5) { 
+                budgetCard.style.backgroundColor = '#e74c3c';
+            } else if (budgetUtilized > timeUtilized) {
+                budgetCard.style.backgroundColor = '#f39c12';
+            } else if (budgetUtilized < timeUtilized - 5) { 
+                budgetCard.style.backgroundColor = '#1abc9c';
+            } else {
+                budgetCard.style.backgroundColor = '#27ae60';
             }
-            const hasPct = rows.some(r => r.pct !== undefined);
-            const maxVal = Math.max(...rows.map(r => Math.abs(r.rawVal || 0)), 1);
-
-            const headerHtml = `<div class="modal-header-row">
-                <span>Category</span>
-                ${hasPct ? '<span class="h-pct">Share</span>' : ''}
-                <span class="h-val">Amount</span>
-            </div>`;
-
-            const rowsHtml = rows.map(r => {
-                const barW = Math.round(Math.abs(r.rawVal || 0) / maxVal * 100);
-                return `<div class="modal-row ${r.drill ? 'drillable' : ''}"
-                    ${r.drill ? `onclick="_drillInto('${r.drillKey}')"` : ''}>
-                    <div class="modal-row-bar" style="width:${barW}%"></div>
-                    <div class="modal-row-content">
-                        <span class="modal-row-label">${r.label}</span>
-                        ${hasPct && r.pct !== undefined ? `<span class="modal-row-pct">${r.pct.toFixed(1)}%</span>` : (hasPct ? '<span class="modal-row-pct"></span>' : '')}
-                        <span class="modal-row-val">${r.value}</span>
-                    </div>
-                </div>`;
-            }).join('');
-
-            body.innerHTML = headerHtml + rowsHtml;
-            body.scrollTop = 0;
-        }
-
-        function openKpiModal(title, totalText, totalClass, period, rows) {
-            _modalStack = [{ title, totalText, totalClass, period, rows }];
-            _renderModal(_modalStack[0]);
-            document.getElementById('kpi-modal-overlay').classList.add('open');
-            document.addEventListener('keydown', _modalEsc);
-        }
-
-        // _drillInto is called with a key; drillFns map keys to frame builders
-        let _drillFns = {};
-        function _drillInto(key) {
-            if (!_drillFns[key]) return;
-            const frame = _drillFns[key]();
-            if (!frame) return;
-            _modalStack.push(frame);
-            _renderModal(frame);
-        }
-        function _drillBack(toDepth) {
-            _modalStack = _modalStack.slice(0, toDepth);
-            _renderModal(_modalStack[_modalStack.length - 1]);
-        }
-
-        function closeKpiModal() {
-            document.getElementById('kpi-modal-overlay').classList.remove('open');
-            _modalStack = [];
-            _drillFns   = {};
-            document.removeEventListener('keydown', _modalEsc);
-        }
-        function _modalEsc(e) { if (e.key === 'Escape') closeKpiModal(); }
-
-        // ── Openers for each card ──
-        function _getIdx() { return parseInt(document.getElementById('month-selector-1').value, 10); }
-        function _getPeriod(idx) { return incomeData[idx] ? incomeData[idx].Period : ''; }
-        function _incomeKeys() {
-            if (!incomeData.length) return [];
-            return Object.keys(incomeData[0]).filter(h => h && h !== 'Period' && h !== incomeHeaderKey);
-        }
-        function _bsKeys(headerKey) {
-            if (!balanceSheetData.length) return [];
-            return Object.keys(balanceSheetData[0]).filter(h => h && h !== 'Period' && h !== headerKey);
-        }
-
-        function openIncomeModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const entry = incomeData[idx];
-            const total = parseValue(entry[incomeHeaderKey]);
-            const rows = _incomeKeys().map(h => {
-                const v = parseValue(entry[h]);
-                return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            });
-            openKpiModal('Total Income', formatCurrency(total), '', period, rows);
-        }
-
-        function openExpenseModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const data = expenseData[idx];
-            const total = parseValue(data[detectedTotalExpenseIdx]);
-            const rows = detectedActualCols.map(ci => {
-                const v = parseValue(data[ci]);
-                return { label: expenseHeaders[ci], rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            });
-            openKpiModal('Total Expense', formatCurrency(total), '', period, rows);
-        }
-
-        function openNetProfitModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const income  = parseValue(incomeData[idx][incomeHeaderKey]);
-            const expense = parseValue(expenseData[idx][detectedTotalExpenseIdx]);
-            const net = income - expense;
-            _drillFns = {
-                income: () => {
-                    const rows = _incomeKeys().map(h => {
-                        const v = parseValue(incomeData[idx][h]);
-                        return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(income||1))*100 };
-                    });
-                    return { title: 'Income Breakdown', totalText: formatCurrency(income), totalClass: '', period, rows };
-                },
-                expense: () => {
-                    const rows = detectedActualCols.map(ci => {
-                        const v = parseValue(expenseData[idx][ci]);
-                        return { label: expenseHeaders[ci], rawVal: v, value: formatCurrency(v), pct: (v/(expense||1))*100 };
-                    });
-                    return { title: 'Expense Breakdown', totalText: formatCurrency(expense), totalClass: '', period, rows };
-                }
-            };
-            const rows = [
-                { label: 'Total Income',      rawVal: income,         value: formatCurrency(income),  pct: 100,                         drill: true, drillKey: 'income'  },
-                { label: 'Total Expense',     rawVal: expense,        value: formatCurrency(expense), pct: (expense/(income||1))*100,   drill: true, drillKey: 'expense' },
-                { label: 'Net Profit / Loss', rawVal: Math.abs(net),  value: formatCurrency(net) },
-            ];
-            openKpiModal('Net Profit / Loss', formatCurrency(net), net >= 0 ? 'profit' : 'loss', period, rows);
-        }
-
-        function openProfitMarginModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const income  = parseValue(incomeData[idx][incomeHeaderKey]);
-            const expense = parseValue(expenseData[idx][detectedTotalExpenseIdx]);
-            const net     = income - expense;
-            const margin  = income ? (net/income)*100 : 0;
-            _drillFns = {
-                income: () => {
-                    const rows = _incomeKeys().map(h => {
-                        const v = parseValue(incomeData[idx][h]);
-                        return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(income||1))*100 };
-                    });
-                    return { title: 'Income Breakdown', totalText: formatCurrency(income), totalClass: '', period, rows };
-                },
-                expense: () => {
-                    const rows = detectedActualCols.map(ci => {
-                        const v = parseValue(expenseData[idx][ci]);
-                        return { label: expenseHeaders[ci], rawVal: v, value: formatCurrency(v), pct: (v/(expense||1))*100 };
-                    });
-                    return { title: 'Expense Breakdown', totalText: formatCurrency(expense), totalClass: '', period, rows };
-                }
-            };
-            const rows = [
-                { label: 'Total Income',      rawVal: income,        value: formatCurrency(income),  drill: true, drillKey: 'income'  },
-                { label: 'Total Expense',     rawVal: expense,       value: formatCurrency(expense), drill: true, drillKey: 'expense' },
-                { label: 'Net Profit / Loss', rawVal: Math.abs(net), value: formatCurrency(net)  },
-                { label: 'Profit Margin',     rawVal: Math.abs(margin), value: margin.toFixed(1)+'%' },
-            ];
-            openKpiModal('Profit Margin', margin.toFixed(1)+'%', margin >= 0 ? 'profit' : 'loss', period, rows);
-        }
-
-        function openProjectExpenseModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const data  = expenseData[idx];
-            const total = detectedProjects.reduce((s,p) => s + parseValue(data[p.totalIdx]), 0);
-            _drillFns = {};
-            detectedProjects.forEach(p => {
-                _drillFns['proj_'+p.sectionId] = () => {
-                    const pt = parseValue(data[p.totalIdx]);
-                    const rows = p.lineItemIndices.map(ci => {
-                        const v = parseValue(data[ci]);
-                        return { label: expenseHeaders[ci], rawVal: v, value: formatCurrency(v), pct: (v/(pt||1))*100 };
-                    });
-                    return { title: p.displayName, totalText: formatCurrency(pt), totalClass: '', period, rows };
-                };
-            });
-            const rows = detectedProjects.map(p => {
-                const v = parseValue(data[p.totalIdx]);
-                return { label: p.displayName, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100, drill: true, drillKey: 'proj_'+p.sectionId };
-            });
-            openKpiModal('Total Project Expenses', formatCurrency(total), '', period, rows);
-        }
-
-        function openCoreExpenseModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const data  = expenseData[idx];
-            const cols  = detectedCore ? detectedCore.lineItemIndices : [];
-            const total = detectedCore ? parseValue(data[detectedCore.totalIdx]) : 0;
-            const rows  = cols.map(ci => {
-                const v = parseValue(data[ci]);
-                return { label: expenseHeaders[ci], rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            });
-            openKpiModal('Core Expenses', formatCurrency(total), '', period, rows);
-        }
-
-        function openAssetsModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const entry = balanceSheetData[idx] || {};
-            const total = parseValue(entry[assetsHeaderKey] || 0);
-            const rows  = _bsKeys(assetsHeaderKey).map(h => {
-                const v = parseValue(entry[h]);
-                return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            });
-            openKpiModal('Assets', formatCurrency(total), '', period, rows);
-        }
-
-        function openLiabilitiesModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const entry = balanceSheetData[idx] || {};
-            const total = parseValue(entry[liabilitiesHeaderKey] || 0);
-            const rows  = _bsKeys(liabilitiesHeaderKey).map(h => {
-                const v = parseValue(entry[h]);
-                return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            });
-            openKpiModal('Liabilities', formatCurrency(total), '', period, rows);
-        }
-
-        function openEquityModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const entry  = balanceSheetData[idx] || {};
-            const assets = parseValue(entry[assetsHeaderKey]       || 0);
-            const liabs  = parseValue(entry[liabilitiesHeaderKey]  || 0);
-            const equity = assets - liabs;
-            const rows = [
-                { label: 'Total Assets',      rawVal: assets,          value: formatCurrency(assets) },
-                { label: 'Total Liabilities', rawVal: liabs,           value: formatCurrency(liabs)  },
-                { label: 'Equity (A – L)',    rawVal: Math.abs(equity), value: formatCurrency(equity) },
-            ];
-            openKpiModal('Equity', formatCurrency(equity), '', period, rows);
         }
 
         function initDashboard() {
-            document.getElementById('income-card').addEventListener('click', openIncomeModal);
-            document.getElementById('expense-card').addEventListener('click', openExpenseModal);
-            document.getElementById('net-profit-card').addEventListener('click', openNetProfitModal);
-            document.getElementById('profit-margin-card').addEventListener('click', openProfitMarginModal);
-            document.getElementById('core-expense-card').addEventListener('click', openCoreExpenseModal);
-            document.getElementById('project-expense-card').addEventListener('click', openProjectExpenseModal);
-            document.getElementById('assets-card').addEventListener('click', openAssetsModal);
-            document.getElementById('liabilities-card').addEventListener('click', openLiabilitiesModal);
-            document.getElementById('equity-card').addEventListener('click', openEquityModal);
+            document.getElementById('income-card').addEventListener('click', showIncomeBreakdown);
+            document.getElementById('expense-card').addEventListener('click', showExpenseBreakdown);
+            document.getElementById('core-expense-card').addEventListener('click', showCoreExpenseBreakdown);
+            document.getElementById('project-expense-card').addEventListener('click', showProjectBreakdown);
+            document.getElementById('assets-card').addEventListener('click', () => showFinancialBreakdown('assets'));
+            document.getElementById('liabilities-card').addEventListener('click', () => showFinancialBreakdown('liabilities'));
             document.getElementById('back-to-income-btn').addEventListener('click', hideIncomeBreakdown);
             document.getElementById('back-to-expense-btn').addEventListener('click', hideExpenseBreakdown);
             document.getElementById('back-to-metrics-btn').addEventListener('click', hideProjectBreakdown);
             document.getElementById('back-to-metrics-from-core-btn').addEventListener('click', hideCoreExpenseBreakdown);
-
+            
+            // Dynamic project row click — uses projectName (set by showProjectBreakdown)
             document.getElementById('project-breakdown-table').addEventListener('click', (e) => {
                 const row = e.target.closest('.clickable-row');
-                if (row) {
-                    const projectName = row.dataset.project;
-                    showSpecificProjectBreakdown(projectName);
+                if (row && row.dataset.projectName) {
+                    showSpecificProjectBreakdown(row.dataset.projectName);
                 }
             });
-            // Static project back buttons (legacy)
-            ['sahiwal','uil','orangi','nca','bat-eap','un-women','new1'].forEach(id => {
-                const btn = document.getElementById('back-to-project-btn-' + id);
-                if (btn) btn.addEventListener('click', showProjectBreakdown);
-            });
+
             document.getElementById('back-to-metrics-from-financial-btn').addEventListener('click', hideFinancialBreakdown);
             document.getElementById('back-to-assets-breakdown-btn').addEventListener('click', hideInvestmentBreakdown);
             document.getElementById('back-to-investment-btn').addEventListener('click', hideProvidentFundBreakdown);
@@ -2551,10 +1740,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             uploadView.style.display = 'flex';
             dashboardView.style.display = 'none';
-            loadAllSheets();
+            loadLiveData();
         });
 
     </script>
 </body>
-</html>
 </html>
