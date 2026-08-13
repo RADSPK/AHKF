@@ -1183,38 +1183,84 @@
             balance: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLzxcrDdPGukeMhELio93dNHKAigzHoBgetyD7_q6nMH-cuUln3Cba3kZGJiym3ITKA17ou9llpfqC/pub?output=csv'
         };
 
-        async function fetchCSV(url) {
-            const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-            const res = await fetch(proxyUrl);
-            if (!res.ok) throw new Error('Failed to fetch: ' + url);
-            return await res.text();
+        // Multiple CORS proxies — tried in order, first success wins
+        const CORS_PROXIES = [
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            url => `https://proxy.cors.sh/${url}`,
+            url => `https://cors-anywhere.herokuapp.com/${url}`,
+        ];
+
+        async function fetchCSV(url, stepId) {
+            const step = (msg, done) => {
+                const el = document.getElementById(stepId);
+                if (el) el.textContent = (done === true ? '✅' : done === false ? '⏳' : '🔄') + ' ' + msg;
+            };
+            // Try direct first (works if Google allows CORS for published sheets)
+            try {
+                const res = await Promise.race([
+                    fetch(url, { mode: 'cors' }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
+                ]);
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text && text.length > 20) return text;
+                }
+            } catch(e) { /* fall through to proxies */ }
+
+            // Try each proxy with a timeout
+            for (let i = 0; i < CORS_PROXIES.length; i++) {
+                const proxyUrl = CORS_PROXIES[i](url);
+                step(`Loading… (attempt ${i + 1}/${CORS_PROXIES.length})`, null);
+                try {
+                    const res = await Promise.race([
+                        fetch(proxyUrl),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+                    ]);
+                    if (res.ok) {
+                        const text = await res.text();
+                        if (text && text.length > 20) return text;
+                    }
+                } catch(e) { /* try next proxy */ }
+            }
+            throw new Error('All proxies failed for: ' + url);
         }
 
         async function loadLiveData() {
             const step = (id, msg, done) => {
                 const el = document.getElementById(id);
-                if (el) el.textContent = (done ? '✅' : '⏳') + ' ' + msg;
+                if (el) el.textContent = (done === true ? '✅' : done === false ? '⏳' : '🔄') + ' ' + msg;
             };
             try {
-                step('step-income',  'Fetching Income Statement…',  false);
-                const incomeCsv  = await fetchCSV(SHEETS.income);
-                step('step-income',  'Income Statement loaded',      true);
+                step('step-income',  'Fetching Income Statement…', false);
+                const incomeCsv  = await fetchCSV(SHEETS.income,  'step-income');
+                step('step-income',  'Income Statement loaded',     true);
 
-                step('step-expense', 'Fetching Expense Report…',     false);
-                const expenseCsv = await fetchCSV(SHEETS.expense);
-                step('step-expense', 'Expense Report loaded',         true);
+                step('step-expense', 'Fetching Expense Report…',   false);
+                const expenseCsv = await fetchCSV(SHEETS.expense, 'step-expense');
+                step('step-expense', 'Expense Report loaded',       true);
 
-                step('step-balance', 'Fetching Balance Sheet…',      false);
-                const balanceCsv = await fetchCSV(SHEETS.balance);
-                step('step-balance', 'Balance Sheet loaded',          true);
+                step('step-balance', 'Fetching Balance Sheet…',    false);
+                const balanceCsv = await fetchCSV(SHEETS.balance, 'step-balance');
+                step('step-balance', 'Balance Sheet loaded',        true);
+
+                document.getElementById('loading-status').textContent = '✓ All data loaded — opening dashboard…';
+                await new Promise(r => setTimeout(r, 400));
 
                 uploadView.style.display = 'none';
                 dashboardView.style.display = 'block';
                 processFiles(incomeCsv, expenseCsv, balanceCsv);
                 initDashboard();
             } catch(err) {
-                showMessage('error-message',
-                    'Could not load live data. Please check your internet connection. (' + err.message + ')', true);
+                const errEl = document.getElementById('error-message');
+                if (errEl) {
+                    errEl.style.display = 'block';
+                    errEl.style.color = '#f44336';
+                    errEl.innerHTML = `⚠️ Could not load data.<br><small>${err.message}</small><br><br>
+                        <button onclick="loadLiveData()" style="margin-top:8px;padding:8px 18px;background:#1a3a6e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:0.9em;">
+                            🔄 Retry
+                        </button>`;
+                }
                 document.getElementById('loading-status').textContent = 'Connection failed.';
             }
         }
