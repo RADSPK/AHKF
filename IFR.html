@@ -451,11 +451,13 @@
             padding: 18px 14px;
             text-align: center;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.15s, box-shadow 0.15s;
         }
 
         .metric-card:hover {
             background: #c8d8ed;
+            box-shadow: 0 4px 14px rgba(26,58,110,0.18);
+            transform: translateY(-1px);
         }
 
         .metric-value {
@@ -659,21 +661,21 @@
             border-bottom: 1.5px solid #dde3ea;
             font-weight: 600;
         }
-        #kpi-modal-body table th:nth-child(2),
-        #kpi-modal-body table th:nth-child(3) { text-align: right; }
+        #kpi-modal-body table th:last-child { text-align: right; }
         #kpi-modal-body table td {
             padding: 13px 22px;
             border-bottom: 0.5px solid #edf0f5;
             color: #1a2a40;
             font-size: 0.97em;
         }
-        #kpi-modal-body table td:nth-child(2),
-        #kpi-modal-body table td:nth-child(3) {
+        #kpi-modal-body table td:last-child {
             text-align: right;
             font-weight: 600;
             font-variant-numeric: tabular-nums;
+            padding-right: 22px;
+            white-space: nowrap;
+            width: 130px;
         }
-        #kpi-modal-body table td:nth-child(2) { color: #7a9abf; font-weight: 500; }
         #kpi-modal-body table tr:last-child td { border-bottom: none; }
         /* drillable row */
         #kpi-modal-body table tr.drillable { cursor: pointer; }
@@ -686,15 +688,27 @@
         }
         #kpi-modal-body table tr.drillable:hover td:first-child::after { opacity: 1; }
         /* bar spark in cells */
-        .modal-bar {
-            display: inline-block;
-            height: 5px;
-            border-radius: 3px;
-            background: #1a3a6e;
-            opacity: 0.25;
-            vertical-align: middle;
-            margin-right: 8px;
+        .modal-bar-cell {
+            position: relative;
+            padding: 0 !important;
         }
+        .modal-bar-inner {
+            position: relative;
+            padding: 13px 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-bar-bg {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(26,58,110,0.10) 0%, rgba(26,58,110,0.04) 100%);
+            border-radius: 0 4px 4px 0;
+            pointer-events: none;
+            transition: width 0.4s cubic-bezier(.4,0,.2,1);
+        }
+        .modal-bar-label { position: relative; flex: 1; color: #1a2a40; }
+        .modal-bar-pct   { position: relative; color: #7a9abf; font-size: 0.85em; min-width: 38px; text-align: right; }
         /* empty state */
         .modal-empty {
             padding: 32px 22px;
@@ -2242,31 +2256,33 @@
 
             // Breadcrumb
             const bc = document.getElementById('kpi-modal-breadcrumb');
-            if (_modalStack.length <= 1) {
-                bc.innerHTML = '';
-            } else {
-                bc.innerHTML = _modalStack.slice(0, -1).map((f, i) =>
+            bc.innerHTML = _modalStack.length <= 1 ? '' :
+                _modalStack.slice(0, -1).map((f, i) =>
                     `<span class="bc-item" onclick="_drillBack(${i+1})">${f.title}</span><span class="bc-sep">›</span>`
                 ).join('') + `<span class="bc-current">${frame.title}</span>`;
-            }
 
             // Body
             const body = document.getElementById('kpi-modal-body');
             const rows = frame.rows || [];
             if (!rows.length) {
                 body.innerHTML = '<div class="modal-empty">No further breakdown available.</div>';
+                body.scrollTop = 0;
                 return;
             }
-            const hasPct   = rows.some(r => r.pct  !== undefined);
-            const hasDrill = rows.some(r => r.drill);
-            const maxVal   = Math.max(...rows.map(r => r.rawVal || 0));
+
+            const maxVal = Math.max(...rows.map(r => Math.abs(r.rawVal || 0)), 1);
 
             const tbodyHtml = rows.map(r => {
-                const barW = maxVal > 0 ? Math.round((r.rawVal||0) / maxVal * 90) : 0;
-                const bar  = barW > 0 ? `<span class="modal-bar" style="width:${barW}px"></span>` : '';
-                return `<tr class="${r.drill ? 'drillable' : ''}" ${r.drill ? `onclick="_drillInto('${r.drillKey}')"` : ''}>
-                    <td>${bar}${r.label}</td>
-                    ${hasPct ? `<td>${r.pct !== undefined ? r.pct.toFixed(1)+'%' : ''}</td>` : ''}
+                const barPct = Math.round(Math.abs(r.rawVal || 0) / maxVal * 100);
+                const isDrill = r.drill;
+                return `<tr class="${isDrill ? 'drillable' : ''}" ${isDrill ? `onclick="_drillInto('${r.drillKey}')"` : ''}>
+                    <td class="modal-bar-cell">
+                        <div class="modal-bar-inner">
+                            <div class="modal-bar-bg" style="width:${barPct}%"></div>
+                            <span class="modal-bar-label">${r.label}</span>
+                            ${r.pct !== undefined ? `<span class="modal-bar-pct">${r.pct.toFixed(1)}%</span>` : ''}
+                        </div>
+                    </td>
                     <td>${r.value}</td>
                 </tr>`;
             }).join('');
@@ -2274,8 +2290,7 @@
             body.innerHTML = `<table>
                 <thead><tr>
                     <th>Category</th>
-                    ${hasPct ? '<th>Share</th>' : ''}
-                    <th>Amount</th>
+                    <th style="text-align:right;width:130px">Amount</th>
                 </tr></thead>
                 <tbody>${tbodyHtml}</tbody>
             </table>`;
@@ -2435,16 +2450,30 @@
             openKpiModal('Core Expenses', formatCurrency(total), '', period, rows);
         }
 
+        function _balanceRows(idx, headerKey) {
+            if (!balanceData || !balanceData[idx]) return [];
+            const total = parseValue(balanceData[idx][headerKey]);
+            // Show all numeric columns except Period and the total column itself
+            return Object.keys(balanceData[idx])
+                .filter(h => h && h !== 'Period' && h !== headerKey)
+                .map(h => {
+                    const v = parseValue(balanceData[idx][h]);
+                    return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
+                }).filter(r => r.rawVal !== 0);
+        }
+
         function openAssetsModal() {
             const idx = _getIdx(); const period = _getPeriod(idx);
             const total = parseValue(balanceData ? balanceData[idx][assetsHeaderKey] : 0);
-            openKpiModal('Assets', formatCurrency(total), '', period, []);
+            const rows  = _balanceRows(idx, assetsHeaderKey);
+            openKpiModal('Assets', formatCurrency(total), '', period, rows);
         }
 
         function openLiabilitiesModal() {
             const idx = _getIdx(); const period = _getPeriod(idx);
             const total = parseValue(balanceData ? balanceData[idx][liabilitiesHeaderKey] : 0);
-            openKpiModal('Liabilities', formatCurrency(total), '', period, []);
+            const rows  = _balanceRows(idx, liabilitiesHeaderKey);
+            openKpiModal('Liabilities', formatCurrency(total), '', period, rows);
         }
 
         function openEquityModal() {
