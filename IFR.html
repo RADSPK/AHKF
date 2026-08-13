@@ -343,6 +343,14 @@
         #budget-time-utilization-section .metric-card:hover {
             background: rgba(255,255,255,0.2);
         }
+        #budget-time-utilization-section .metric-card.card-green {
+            background: rgba(39,174,96,0.35);
+            border-color: rgba(39,174,96,0.7);
+        }
+        #budget-time-utilization-section .metric-card.card-red {
+            background: rgba(192,57,43,0.35);
+            border-color: rgba(192,57,43,0.7);
+        }
         #budget-time-utilization-section .metric-value {
             color: #fff !important;
         }
@@ -2036,8 +2044,16 @@
 
             document.getElementById('budget-utilization-metric').textContent = formatPercentage(budgetUtilized);
             document.getElementById('time-utilization-metric').textContent = formatPercentage(timeUtilized);
-            document.getElementById('budget-utilization-card').style.removeProperty('background-color');
-            document.getElementById('time-utilization-card').style.removeProperty('background-color');
+
+            // Budget card: green if on/under budget vs time elapsed, red if overspent
+            const budgetCard = document.getElementById('budget-utilization-card');
+            budgetCard.classList.remove('card-green', 'card-red');
+            budgetCard.classList.add(budgetUtilized <= timeUtilized + 5 ? 'card-green' : 'card-red');
+
+            // Time card: always green (time elapsed is always a valid positive metric)
+            const timeCard = document.getElementById('time-utilization-card');
+            timeCard.classList.remove('card-green', 'card-red');
+            timeCard.classList.add('card-green');
         }
 
         function initDashboard() {
