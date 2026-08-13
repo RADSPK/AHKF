@@ -544,6 +544,113 @@
                 font-size: 1.5em;
             }
         }
+
+        /* ── KPI Detail Modal ── */
+        #kpi-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10,22,40,0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(3px);
+        }
+        #kpi-modal-overlay.open { display: flex; }
+        #kpi-modal {
+            background: #fff;
+            border-radius: 14px;
+            width: 90%;
+            max-width: 560px;
+            max-height: 82vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(10,22,40,0.3);
+            animation: modalIn 0.18s ease;
+        }
+        @keyframes modalIn {
+            from { transform: translateY(18px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        #kpi-modal-header {
+            background: #1a3a6e;
+            padding: 18px 22px 14px;
+            color: #fff;
+        }
+        #kpi-modal-title {
+            font-size: 0.78em;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 4px;
+        }
+        #kpi-modal-total {
+            font-size: 1.9em;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+        #kpi-modal-total.profit { color: #6ee8a2; }
+        #kpi-modal-total.loss   { color: #f5a0a0; }
+        #kpi-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: #fff;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        #kpi-modal-close:hover { background: rgba(255,255,255,0.28); }
+        #kpi-modal-body {
+            overflow-y: auto;
+            padding: 0;
+        }
+        #kpi-modal-body table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        #kpi-modal-body table thead tr {
+            background: #f0f4fa;
+        }
+        #kpi-modal-body table th {
+            padding: 10px 18px;
+            text-align: left;
+            font-size: 0.75em;
+            letter-spacing: 0.5px;
+            color: #5a7a9e;
+            text-transform: uppercase;
+            border-bottom: 1px solid #dde3ea;
+            font-weight: 600;
+        }
+        #kpi-modal-body table th:last-child { text-align: right; }
+        #kpi-modal-body table td {
+            padding: 11px 18px;
+            border-bottom: 0.5px solid #edf0f5;
+            color: #1a2a40;
+        }
+        #kpi-modal-body table td:last-child {
+            text-align: right;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        #kpi-modal-body table tr:last-child td { border-bottom: none; }
+        #kpi-modal-body table tr:hover td { background: #f6f9fd; }
+        #kpi-modal-period {
+            font-size: 0.72em;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -898,6 +1005,20 @@
                 </div>
             </div>
         </section>
+    </div>
+
+
+    <!-- KPI Detail Modal -->
+    <div id="kpi-modal-overlay" onclick="if(event.target===this)closeKpiModal()">
+        <div id="kpi-modal" style="position:relative;">
+            <div id="kpi-modal-header">
+                <div id="kpi-modal-title">Total Income</div>
+                <div id="kpi-modal-total">Rs 0</div>
+                <div id="kpi-modal-period"></div>
+                <button id="kpi-modal-close" onclick="closeKpiModal()">✕</button>
+            </div>
+            <div id="kpi-modal-body"></div>
+        </div>
     </div>
 
     <script>
@@ -2056,13 +2177,165 @@
             timeCard.classList.add('card-green');
         }
 
+
+        // ─── KPI Modal ───────────────────────────────────────────
+        function openKpiModal(title, totalText, totalClass, period, rows) {
+            // rows: [{label, value}]
+            document.getElementById('kpi-modal-title').textContent = title;
+            const tot = document.getElementById('kpi-modal-total');
+            tot.textContent = totalText;
+            tot.className = totalClass || '';
+            document.getElementById('kpi-modal-period').textContent = period;
+
+            const body = document.getElementById('kpi-modal-body');
+            if (!rows || rows.length === 0) {
+                body.innerHTML = '<p style="padding:20px 18px;color:#8a9ab0;font-size:0.88em;">No breakdown available.</p>';
+            } else {
+                const pct = rows.some(r => r.pct !== undefined);
+                body.innerHTML = `<table>
+                    <thead><tr>
+                        <th>Category</th>
+                        ${pct ? '<th style="text-align:right">%</th>' : ''}
+                        <th>Amount</th>
+                    </tr></thead>
+                    <tbody>${rows.map(r => `<tr>
+                        <td>${r.label}</td>
+                        ${pct ? `<td style="text-align:right;color:#5a7a9e;font-weight:400">${r.pct !== undefined ? r.pct.toFixed(1)+'%' : ''}</td>` : ''}
+                        <td>${r.value}</td>
+                    </tr>`).join('')}</tbody>
+                </table>`;
+            }
+            document.getElementById('kpi-modal-overlay').classList.add('open');
+            document.addEventListener('keydown', _modalEsc);
+        }
+
+        function closeKpiModal() {
+            document.getElementById('kpi-modal-overlay').classList.remove('open');
+            document.removeEventListener('keydown', _modalEsc);
+        }
+        function _modalEsc(e) { if (e.key === 'Escape') closeKpiModal(); }
+
+        // ── Openers for each card ──
+        function openIncomeModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const total = parseValue(incomeData[idx][incomeHeaderKey]);
+            const rows = incomeHeaders
+                .filter(h => h && h !== 'Period' && h !== incomeHeaderKey)
+                .map(h => {
+                    const v = parseValue(incomeData[idx][h]);
+                    return { label: h, value: formatCurrency(v), pct: (v / (total||1)) * 100 };
+                }).filter(r => parseFloat(r.pct) !== 0);
+            openKpiModal('Total Income', formatCurrency(total), '', period, rows);
+        }
+
+        function openExpenseModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const data = expenseData[idx];
+            const total = parseValue(data[detectedTotalExpenseIdx]);
+            const rows = detectedActualCols.map(ci => {
+                const v = parseValue(data[ci]);
+                return { label: expenseHeaders[ci], value: formatCurrency(v), pct: (v / (total||1)) * 100 };
+            }).filter(r => parseFloat(r.pct) !== 0);
+            openKpiModal('Total Expense', formatCurrency(total), '', period, rows);
+        }
+
+        function openNetProfitModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const income  = parseValue(incomeData[idx][incomeHeaderKey]);
+            const expense = parseValue(expenseData[idx][detectedTotalExpenseIdx]);
+            const net     = income - expense;
+            const cls     = net >= 0 ? 'profit' : 'loss';
+            const rows = [
+                { label: 'Total Income',  value: formatCurrency(income)  },
+                { label: 'Total Expense', value: formatCurrency(expense) },
+                { label: 'Net Profit / Loss', value: formatCurrency(net) },
+            ];
+            openKpiModal('Net Profit / Loss', formatCurrency(net), cls, period, rows);
+        }
+
+        function openProfitMarginModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const income  = parseValue(incomeData[idx][incomeHeaderKey]);
+            const expense = parseValue(expenseData[idx][detectedTotalExpenseIdx]);
+            const net     = income - expense;
+            const margin  = income !== 0 ? ((net / income) * 100) : 0;
+            const cls     = margin >= 0 ? 'profit' : 'loss';
+            const rows = [
+                { label: 'Total Income',   value: formatCurrency(income)              },
+                { label: 'Total Expense',  value: formatCurrency(expense)             },
+                { label: 'Net Profit / Loss', value: formatCurrency(net)              },
+                { label: 'Profit Margin',  value: margin.toFixed(1) + '%'             },
+            ];
+            openKpiModal('Profit Margin', margin.toFixed(1) + '%', cls, period, rows);
+        }
+
+        function openProjectExpenseModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const data = expenseData[idx];
+            const total = detectedProjects.reduce((s, p) => s + parseValue(data[p.totalIdx]), 0);
+            const rows = detectedProjects.map(p => {
+                const v = parseValue(data[p.totalIdx]);
+                return { label: p.displayName, value: formatCurrency(v), pct: (v / (total||1)) * 100 };
+            }).filter(r => parseFloat(r.pct) !== 0);
+            openKpiModal('Total Project Expenses', formatCurrency(total), '', period, rows);
+        }
+
+        function openCoreExpenseModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const data = expenseData[idx];
+            const cols  = detectedCore ? detectedCore.lineItemIndices : [];
+            const total = detectedCore ? parseValue(data[detectedCore.totalIdx]) : 0;
+            const rows  = cols.map(ci => {
+                const v = parseValue(data[ci]);
+                return { label: expenseHeaders[ci], value: formatCurrency(v), pct: (v / (total||1)) * 100 };
+            }).filter(r => parseFloat(r.pct) !== 0);
+            openKpiModal('Core Expenses', formatCurrency(total), '', period, rows);
+        }
+
+        function openAssetsModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const total = parseValue(balanceData ? balanceData[idx][assetsHeaderKey] : 0);
+            openKpiModal('Assets', formatCurrency(total), '', period, []);
+        }
+
+        function openLiabilitiesModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const total = parseValue(balanceData ? balanceData[idx][liabilitiesHeaderKey] : 0);
+            openKpiModal('Liabilities', formatCurrency(total), '', period, []);
+        }
+
+        function openEquityModal() {
+            const idx = document.getElementById('month-selector-1').value;
+            const period = incomeData[idx].Period;
+            const assets = parseValue(balanceData ? balanceData[idx][assetsHeaderKey] : 0);
+            const liabs  = parseValue(balanceData ? balanceData[idx][liabilitiesHeaderKey] : 0);
+            const equity = assets - liabs;
+            const rows = [
+                { label: 'Total Assets',      value: formatCurrency(assets) },
+                { label: 'Total Liabilities', value: formatCurrency(liabs)  },
+                { label: 'Equity (A – L)',     value: formatCurrency(equity) },
+            ];
+            openKpiModal('Equity', formatCurrency(equity), '', period, rows);
+        }
+
         function initDashboard() {
-            document.getElementById('income-card').addEventListener('click', showIncomeBreakdown);
-            document.getElementById('expense-card').addEventListener('click', showExpenseBreakdown);
-            document.getElementById('core-expense-card').addEventListener('click', showCoreExpenseBreakdown);
-            document.getElementById('project-expense-card').addEventListener('click', showProjectBreakdown);
-            document.getElementById('assets-card').addEventListener('click', () => showFinancialBreakdown('assets'));
-            document.getElementById('liabilities-card').addEventListener('click', () => showFinancialBreakdown('liabilities'));
+            document.getElementById('income-card').addEventListener('click', openIncomeModal);
+            document.getElementById('expense-card').addEventListener('click', openExpenseModal);
+            document.getElementById('net-profit-card').addEventListener('click', openNetProfitModal);
+            document.getElementById('profit-margin-card').addEventListener('click', openProfitMarginModal);
+            document.getElementById('core-expense-card').addEventListener('click', openCoreExpenseModal);
+            document.getElementById('project-expense-card').addEventListener('click', openProjectExpenseModal);
+            document.getElementById('assets-card').addEventListener('click', openAssetsModal);
+            document.getElementById('liabilities-card').addEventListener('click', openLiabilitiesModal);
+            document.getElementById('equity-card').addEventListener('click', openEquityModal);
             document.getElementById('back-to-income-btn').addEventListener('click', hideIncomeBreakdown);
             document.getElementById('back-to-expense-btn').addEventListener('click', hideExpenseBreakdown);
             document.getElementById('back-to-metrics-btn').addEventListener('click', hideProjectBreakdown);
