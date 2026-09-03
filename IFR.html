@@ -2181,12 +2181,13 @@
                     return { title: 'Current Assets', totalText: formatCurrency(sub), totalClass: '', period, rows };
                 },
                 investments: () => {
-                    const sub = cv(14); // Short Term Investments
-                    // Add PF/Core columns to your balance sheet to populate this
+                    const sub  = cv(14); // Short Term Investments
+                    const pf   = cv(23); // Provident Fund Liability = PF Investment
+                    const core = sub - pf; // Core = Total Short Term - PF
                     const rows = [
-                        { label: 'Provident Fund (PF)', rawVal: 0, value: 'Add column to sheet' },
-                        { label: 'Core Investments',    rawVal: 0, value: 'Add column to sheet' },
-                    ];
+                        { label: 'Provident Fund (PF)', rawVal: pf,   value: formatCurrency(pf),   pct: (pf/(sub||1))*100   },
+                        { label: 'Core Investments',    rawVal: core, value: formatCurrency(core), pct: (core/(sub||1))*100 },
+                    ].filter(r => r.rawVal !== 0);
                     return { title: 'Short Term Investments', totalText: formatCurrency(sub), totalClass: '', period, rows };
                 },
             };
@@ -2222,11 +2223,21 @@
                         { label: 'Vendor Payable',           rawVal: cv(20), value: formatCurrency(cv(20)), pct: (cv(20)/(sub||1))*100 },
                         { label: 'Salaries Payable',         rawVal: cv(21), value: formatCurrency(cv(21)), pct: (cv(21)/(sub||1))*100 },
                         { label: 'Deferred Income',          rawVal: cv(22), value: formatCurrency(cv(22)), pct: (cv(22)/(sub||1))*100 },
-                        { label: 'Provident Fund Liability', rawVal: cv(23), value: formatCurrency(cv(23)), pct: (cv(23)/(sub||1))*100 },
+                        { label: 'Provident Fund Liability', rawVal: cv(23), value: formatCurrency(cv(23)), pct: (cv(23)/(sub||1))*100, drill: true, drillKey: 'pfLiability' },
                         { label: 'Income Tax Payable',       rawVal: cv(24), value: formatCurrency(cv(24)), pct: (cv(24)/(sub||1))*100 },
                         { label: 'Other Payable',            rawVal: cv(25), value: formatCurrency(cv(25)), pct: (cv(25)/(sub||1))*100 },
                     ].filter(r => r.rawVal !== 0);
                     return { title: 'Current Liabilities', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+                pfLiability: () => {
+                    const sub     = cv(23); // Provident Fund Liability
+                    const ayesha  = cv(31); // Dr. Ayesha (col AF)
+                    const staff   = cv(32); // Staff (col AG)
+                    const rows = [
+                        { label: 'Dr. Ayesha', rawVal: ayesha, value: formatCurrency(ayesha), pct: (ayesha/(sub||1))*100 },
+                        { label: 'Staff',      rawVal: staff,  value: formatCurrency(staff),  pct: (staff/(sub||1))*100  },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Provident Fund Liability', totalText: formatCurrency(sub), totalClass: '', period, rows };
                 },
             };
 
