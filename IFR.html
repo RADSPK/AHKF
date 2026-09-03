@@ -2129,39 +2129,119 @@
 
         function openAssetsModal() {
             const idx = _getIdx(), period = _getPeriod(idx);
-            const entry = balanceSheetData[idx] || {};
-            const total = parseValue(entry[assetsHeaderKey] || 0);
-            const rows  = _bsKeys(assetsHeaderKey).map(h => {
-                const v = parseValue(entry[h]);
-                return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            }).filter(r => r.rawVal !== 0);
-            openKpiModal('Assets', formatCurrency(total), '', period, rows);
+            const e   = balanceSheetData[idx] || {};
+            const bs  = k => parseValue(e[k] || 0);
+            const total = bs('Total Assets');
+
+            // Register drill-fns
+            _drillFns = {
+                nonCurrent: () => {
+                    const sub = bs('Non Current Assets');
+                    const rows = [
+                        { label: 'Tangible Assets',  rawVal: bs('Tangilble Assets'), value: formatCurrency(bs('Tangilble Assets')), pct: (bs('Tangilble Assets')/(sub||1))*100, drill: true, drillKey: 'tangible' },
+                        { label: 'Intangible Assets', rawVal: bs('Intangible'),       value: formatCurrency(bs('Intangible')),       pct: (bs('Intangible')/(sub||1))*100,       drill: true, drillKey: 'intangible' },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Non-Current Assets', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+                tangible: () => {
+                    const sub  = bs('Tangilble Assets');
+                    const ppe  = bs('Property Plant & Equipment');
+                    const dep  = bs('Acc Depreciation: PPE');
+                    const rows = [
+                        { label: 'Property Plant & Equipment', rawVal: ppe,          value: formatCurrency(ppe),  pct: (ppe/(sub||1))*100  },
+                        { label: 'Acc. Depreciation (PPE)',    rawVal: Math.abs(dep), value: formatCurrency(dep), pct: (Math.abs(dep)/(sub||1))*100 },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Tangible Assets', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+                intangible: () => {
+                    const sub  = bs('Intangible');
+                    const sw   = bs('Softwares');
+                    const dep  = bs('Acc Depreciation-Software');
+                    const rows = [
+                        { label: 'Softwares',                    rawVal: sw,           value: formatCurrency(sw),  pct: (sw/(sub||1))*100  },
+                        { label: 'Acc. Depreciation (Software)', rawVal: Math.abs(dep), value: formatCurrency(dep), pct: (Math.abs(dep)/(sub||1))*100 },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Intangible Assets', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+                current: () => {
+                    const sub  = bs('Current Assets');
+                    const inv  = bs('Short Term Investments');
+                    const rows = [
+                        { label: 'Cash',                  rawVal: bs('Cash'),                  value: formatCurrency(bs('Cash')),                  pct: (bs('Cash')/(sub||1))*100                  },
+                        { label: 'Banks',                 rawVal: bs('Banks'),                 value: formatCurrency(bs('Banks')),                 pct: (bs('Banks')/(sub||1))*100                 },
+                        { label: 'Receivables',           rawVal: bs('Receivables'),           value: formatCurrency(bs('Receivables')),           pct: (bs('Receivables')/(sub||1))*100           },
+                        { label: 'Operational Advances',  rawVal: bs('Operational Advances'),  value: formatCurrency(bs('Operational Advances')),  pct: (bs('Operational Advances')/(sub||1))*100  },
+                        { label: 'Prepayments',           rawVal: bs('Prepayments'),           value: formatCurrency(bs('Prepayments')),           pct: (bs('Prepayments')/(sub||1))*100           },
+                        { label: 'Security Deposits',     rawVal: bs('Security deposits'),     value: formatCurrency(bs('Security deposits')),     pct: (bs('Security deposits')/(sub||1))*100     },
+                        { label: 'Short Term Investments',rawVal: inv,                         value: formatCurrency(inv),                         pct: (inv/(sub||1))*100, drill: true, drillKey: 'investments' },
+                        { label: 'Advance Tax',           rawVal: bs('Advance tax'),           value: formatCurrency(bs('Advance tax')),           pct: (bs('Advance tax')/(sub||1))*100           },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Current Assets', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+                investments: () => {
+                    const sub = bs('Short Term Investments');
+                    // PF and Core — further drillable when data available
+                    const rows = [
+                        { label: 'Provident Fund (PF)',  rawVal: sub * 0, value: 'See PF records', pct: undefined },
+                        { label: 'Core Investments',     rawVal: sub * 0, value: 'See core records', pct: undefined },
+                    ];
+                    // If you add PF/Core columns to your balance sheet, replace above with:
+                    // { label: 'PF',   rawVal: bs('PF Investment'),   value: formatCurrency(bs('PF Investment'))   },
+                    // { label: 'Core', rawVal: bs('Core Investment'),  value: formatCurrency(bs('Core Investment')) },
+                    return { title: 'Short Term Investments', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+            };
+
+            // Top-level: Non-Current + Current
+            const ncv  = bs('Non Current Assets');
+            const curv = bs('Current Assets');
+            const rows = [
+                { label: 'Non-Current Assets', rawVal: ncv,  value: formatCurrency(ncv),  pct: (ncv/(total||1))*100,  drill: true, drillKey: 'nonCurrent' },
+                { label: 'Current Assets',     rawVal: curv, value: formatCurrency(curv), pct: (curv/(total||1))*100, drill: true, drillKey: 'current'    },
+            ].filter(r => r.rawVal !== 0);
+
+            openKpiModal('Total Assets', formatCurrency(total), '', period, rows);
         }
 
         function openLiabilitiesModal() {
             const idx = _getIdx(), period = _getPeriod(idx);
-            const entry = balanceSheetData[idx] || {};
-            const total = parseValue(entry[liabilitiesHeaderKey] || 0);
-            const rows  = _bsKeys(liabilitiesHeaderKey).map(h => {
-                const v = parseValue(entry[h]);
-                return { label: h, rawVal: v, value: formatCurrency(v), pct: (v/(total||1))*100 };
-            }).filter(r => r.rawVal !== 0);
-            openKpiModal('Liabilities', formatCurrency(total), '', period, rows);
+            const e   = balanceSheetData[idx] || {};
+            const bs  = k => parseValue(e[k] || 0);
+            const total = bs('Total Liabilities');
+
+            _drillFns = {
+                nonCurrentLiab: () => {
+                    const sub  = bs('Non Current Liabilities');
+                    const rows = [
+                        { label: 'Long Term Liability', rawVal: bs('Long term Liability'), value: formatCurrency(bs('Long term Liability')), pct: 100 },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Non-Current Liabilities', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+                currentLiab: () => {
+                    const sub  = bs('Current Liabilities');
+                    const rows = [
+                        { label: 'Vendor Payable',          rawVal: bs('Vendor Payable'),          value: formatCurrency(bs('Vendor Payable')),          pct: (bs('Vendor Payable')/(sub||1))*100          },
+                        { label: 'Salaries Payable',        rawVal: bs('Salaries Payable'),        value: formatCurrency(bs('Salaries Payable')),        pct: (bs('Salaries Payable')/(sub||1))*100        },
+                        { label: 'Deferred Income',         rawVal: bs('Deffered Income'),         value: formatCurrency(bs('Deffered Income')),         pct: (bs('Deffered Income')/(sub||1))*100         },
+                        { label: 'Provident Fund Liability',rawVal: bs('Provident Fund Liability'),value: formatCurrency(bs('Provident Fund Liability')),pct: (bs('Provident Fund Liability')/(sub||1))*100},
+                        { label: 'Income Tax Payable',      rawVal: bs('Income Tax Payable'),      value: formatCurrency(bs('Income Tax Payable')),      pct: (bs('Income Tax Payable')/(sub||1))*100      },
+                        { label: 'Other Payable',           rawVal: bs('Other Payable'),           value: formatCurrency(bs('Other Payable')),           pct: (bs('Other Payable')/(sub||1))*100           },
+                    ].filter(r => r.rawVal !== 0);
+                    return { title: 'Current Liabilities', totalText: formatCurrency(sub), totalClass: '', period, rows };
+                },
+            };
+
+            const ncv  = bs('Non Current Liabilities');
+            const curv = bs('Current Liabilities');
+            const rows = [
+                { label: 'Non-Current Liabilities', rawVal: ncv,  value: formatCurrency(ncv),  pct: (ncv/(total||1))*100,  drill: true, drillKey: 'nonCurrentLiab' },
+                { label: 'Current Liabilities',     rawVal: curv, value: formatCurrency(curv), pct: (curv/(total||1))*100, drill: true, drillKey: 'currentLiab'    },
+            ].filter(r => r.rawVal !== 0);
+
+            openKpiModal('Total Liabilities', formatCurrency(total), '', period, rows);
         }
 
-        function openEquityModal() {
-            const idx = _getIdx(), period = _getPeriod(idx);
-            const entry  = balanceSheetData[idx] || {};
-            const assets = parseValue(entry[assetsHeaderKey]      || 0);
-            const liabs  = parseValue(entry[liabilitiesHeaderKey] || 0);
-            const equity = assets - liabs;
-            const rows   = [
-                { label: 'Total Assets',      rawVal: assets,           value: formatCurrency(assets) },
-                { label: 'Total Liabilities', rawVal: liabs,            value: formatCurrency(liabs)  },
-                { label: 'Equity (A – L)',     rawVal: Math.abs(equity), value: formatCurrency(equity) },
-            ];
-            openKpiModal('Equity', formatCurrency(equity), '', period, rows);
-        }
+        function openEquityModal() { /* disabled — not required */ }
 
         function initDashboard() {
             document.getElementById('income-card').addEventListener('click', openIncomeModal);
@@ -2172,7 +2252,7 @@
             document.getElementById('project-expense-card').addEventListener('click', openProjectExpenseModal);
             document.getElementById('assets-card').addEventListener('click', openAssetsModal);
             document.getElementById('liabilities-card').addEventListener('click', openLiabilitiesModal);
-            document.getElementById('equity-card').addEventListener('click', openEquityModal);
+            // Equity card click disabled
             document.getElementById('back-to-income-btn').addEventListener('click', hideIncomeBreakdown);
             document.getElementById('back-to-expense-btn').addEventListener('click', hideExpenseBreakdown);
             document.getElementById('back-to-metrics-btn').addEventListener('click', hideProjectBreakdown);
