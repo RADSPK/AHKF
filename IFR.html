@@ -861,27 +861,62 @@
         let projectBlocks = []; // [{name, totalColIdx, detailCols:[...]}]
         let coreBlock = null;  // {name, totalColIdx, detailCols:[...]}
 
-        // ── Data loaded from local files (fetched by GitHub Actions) ──
+        // ── Live Google Sheets fetch ──
+        const SHEETS = {
+            income:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vR25ymKG6u7X5JmeWalr0EFpYvH1QUx-Lj5fQDKrt6OvZTkwNiXYtaFKZAF6LpXNk6O4aYi7_OKK80I/pub?output=csv',
+            expense: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYyzbGwJz5DBtHzngToFnTfvXjgcTbQmfLz9mVIutD6X_6ufr4o3_WANJazbf0bnb-w2rmQdrwFnKm/pub?output=csv',
+            balance: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSLzxcrDdPGukeMhELio93dNHKAigzHoBgetyD7_q6nMH-cuUln3Cba3kZGJiym3ITKA17ou9llpfqC/pub?output=csv'
+        };
+
+        const CORS_PROXIES = [
+            url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            url => `https://proxy.cors.sh/${url}`,
+            url => `https://cors-anywhere.herokuapp.com/${url}`,
+        ];
+
+        async function fetchCSV(url, stepId) {
+            const step = (msg) => {
+                const el = document.getElementById(stepId);
+                if (el) el.textContent = '🔄 ' + msg;
+            };
+            try {
+                const res = await Promise.race([
+                    fetch(url, { mode: 'cors' }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
+                ]);
+                if (res.ok) { const t = await res.text(); if (t && t.length > 20) return t; }
+            } catch(e) {}
+            for (let i = 0; i < CORS_PROXIES.length; i++) {
+                step(`Loading… (attempt ${i + 1}/${CORS_PROXIES.length})`);
+                try {
+                    const res = await Promise.race([
+                        fetch(CORS_PROXIES[i](url)),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+                    ]);
+                    if (res.ok) { const t = await res.text(); if (t && t.length > 20) return t; }
+                } catch(e) {}
+            }
+            throw new Error('Failed to load data. Check your internet connection.');
+        }
+
         async function loadLiveData() {
             const step = (id, msg, done) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = (done === true ? '✅' : done === false ? '⏳' : '🔄') + ' ' + msg;
             };
-            const load = async (path, stepId, label) => {
-                step(stepId, `Loading ${label}…`, false);
-                const res = await Promise.race([
-                    fetch(path + '?v=' + Date.now()),
-                    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 10000))
-                ]);
-                if (!res.ok) throw new Error(`${label} not found. Has the GitHub Action run yet?`);
-                const text = await res.text();
-                step(stepId, `${label} loaded`, true);
-                return text;
-            };
             try {
-                const incomeCsv  = await load('./data/income.csv',  'step-income',  'Income Statement');
-                const expenseCsv = await load('./data/expense.csv', 'step-expense', 'Expense Report');
-                const balanceCsv = await load('./data/balance.csv', 'step-balance', 'Balance Sheet');
+                step('step-income',  'Fetching Income Statement…', false);
+                const incomeCsv  = await fetchCSV(SHEETS.income,  'step-income');
+                step('step-income',  'Income Statement loaded',     true);
+
+                step('step-expense', 'Fetching Expense Report…',   false);
+                const expenseCsv = await fetchCSV(SHEETS.expense, 'step-expense');
+                step('step-expense', 'Expense Report loaded',       true);
+
+                step('step-balance', 'Fetching Balance Sheet…',    false);
+                const balanceCsv = await fetchCSV(SHEETS.balance, 'step-balance');
+                step('step-balance', 'Balance Sheet loaded',        true);
 
                 document.getElementById('loading-status').textContent = '✓ All data loaded';
                 await new Promise(r => setTimeout(r, 300));
