@@ -2172,11 +2172,13 @@
                 },
                 investments: () => {
                     const sub  = cv(14); // Short Term Investments
-                    const pf   = cv(23); // Provident Fund Liability = PF Investment
-                    const core = sub - pf; // Core = Total Short Term - PF
+                    const pf   = cv(23); // Provident Fund (col X)
+                    const endow = cv(33); // Endowment Fund (col AH)
+                    const core = sub - pf - endow; // Core = Short Term - PF - Endowment
                     const rows = [
-                        { label: 'Provident Fund (PF)', rawVal: pf,   value: formatCurrency(pf),   pct: (pf/(sub||1))*100   },
-                        { label: 'Core Investments',    rawVal: core, value: formatCurrency(core), pct: (core/(sub||1))*100 },
+                        { label: 'Provident Fund (PF)', rawVal: pf,    value: formatCurrency(pf),    pct: (pf/(sub||1))*100    },
+                        { label: 'Core Investments',    rawVal: core,  value: formatCurrency(core),  pct: (core/(sub||1))*100  },
+                        { label: 'Endowment Fund',      rawVal: endow, value: formatCurrency(endow), pct: (endow/(sub||1))*100 },
                     ].filter(r => r.rawVal !== 0);
                     return { title: 'Short Term Investments', totalText: formatCurrency(sub), totalClass: '', period, rows };
                 },
